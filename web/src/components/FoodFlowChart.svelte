@@ -233,7 +233,7 @@
   const formatSpeedActive = (targetMs: number) => Math.abs(speedMs - targetMs) < 100;
 </script>
 
-<section class="hero card" aria-label="Food ranking normalization flow chart">
+<section class="hero card" aria-label="Beli ranking normalization flow chart">
   <div class="toolbar">
     <div class="toolbar-group">
       <label class="inline-field">

@@ -1,7 +1,7 @@
-# Ranking Normalization SDK
+# Beli Ranking Normalization
 
-[![CI](https://github.com/rohanvarshney/barn_heuristic/actions/workflows/ci.yml/badge.svg)](https://github.com/rohanvarshney/barn_heuristic/actions/workflows/ci.yml)
-[![Pages](https://github.com/rohanvarshney/barn_heuristic/actions/workflows/pages.yml/badge.svg)](https://github.com/rohanvarshney/barn_heuristic/actions/workflows/pages.yml)
+[![CI](https://github.com/rohanvarshney/beli-ranking-normalization/actions/workflows/ci.yml/badge.svg)](https://github.com/rohanvarshney/beli-ranking-normalization/actions/workflows/ci.yml)
+[![Pages](https://github.com/rohanvarshney/beli-ranking-normalization/actions/workflows/pages.yml/badge.svg)](https://github.com/rohanvarshney/beli-ranking-normalization/actions/workflows/pages.yml)
 
 Cross-language SDK (Python + Go) for redistributing crowded numeric ratings on the `(1.0, 10.0]` scale into a more even spread while preserving relative ordering.
 
@@ -54,7 +54,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/example/barn_heuristic/go/ranknorm"
+	"github.com/rohanvarshney/beli-ranking-normalization/go/ranknorm"
 )
 
 type Item struct {
@@ -85,13 +85,13 @@ func main() {
 
 ## Web visualizer demo
 
-- Live demo (GitHub Pages): `https://rohanvarshney.github.io/barn_heuristic/`
+- Live demo (GitHub Pages): `https://rohanvarshney.github.io/beli-ranking-normalization/`
 - Implementation guide: `docs/web-ui-visualizer.md`
 - Features:
-  - realtime synchronized scatter + histogram/CDF animation
-  - all 3 algorithm toggles (`quantile_map`, `zscore_sigmoid`, `piecewise_bucket`)
-  - deterministic seeded mock data generation
-  - playback speed and piecewise bucket controls
+  - mirrored food-tier flow chart (`RAW` → `ORDER 100% locked` Bezier ribbons → `NORMALIZED`) across **Skip**, **It's Okay**, **Really Good**, and **All-Time**
+  - interactive strategy cards (`quantile_map`, `zscore_sigmoid`, `piecewise_bucket`) with live morph scrubber and heuristic comparison
+  - ranked food list spotlighting neighbor separation and tier shifts across deterministic diners and rating-style presets
+  - playback speed (`0.5×`, `1×`, `2×`) and piecewise bucket controls (`2–12` buckets)
 
 ## Complexity
 

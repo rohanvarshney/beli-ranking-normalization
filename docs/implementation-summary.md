@@ -1,8 +1,8 @@
-# Ranking Normalization SDK v1 - Implementation Summary
+# Beli Ranking Normalization SDK v1 - Implementation Summary
 
 ## Overview
 
-This repository was built to provide an initial cross-language SDK for **ranking normalization** on score ranges `(1.0, 10.0]`, with the goal of reducing score crowding in narrow buckets and producing a more informative distribution for ranking systems.
+This repository was built to provide an initial cross-language SDK for **Beli Ranking Normalization** on score ranges `(1.0, 10.0]`, with the goal of reducing score crowding in narrow buckets and producing a more informative distribution for ranking systems.
 
 The implementation includes:
 
@@ -204,12 +204,12 @@ GitHub Actions workflow (`.github/workflows/ci.yml`) includes:
 
 ## Notes / Follow-ups
 
-- README CI badge still uses placeholder repo path (`YOUR_ORG/YOUR_REPO`) and should be replaced with your actual GitHub repository coordinates.
-- `go/go.mod` currently uses an example module path and may be updated to your real repository path when you publish.
+- README CI badge points to `rohanvarshney/beli-ranking-normalization`.
+- `go/go.mod` uses `github.com/rohanvarshney/beli-ranking-normalization/go`.
 
 ## Outcome
 
-The repository now contains a working v1 of a ranking normalization SDK with:
+The repository now contains a working v1 of the **Beli Ranking Normalization** SDK with:
 
 - cross-language parity (Python + Go)
 - default quantile strategy and 2 optional alternatives

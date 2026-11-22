@@ -41,7 +41,7 @@ jobs:
 
       - name: Build static site
         working-directory: web
-        run: npm run build -- --base=/barn_heuristic/
+        run: npm run build -- --base=/beli-ranking-normalization/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

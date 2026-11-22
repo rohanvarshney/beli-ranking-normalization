@@ -1,8 +1,8 @@
-# Web UI Visualizer Guide
+# Beli Ranking Normalization — Web UI Visualizer Guide
 
 ## Purpose
 
-The web UI is a Svelte-based interactive explorer that visualizes how ranking normalization transforms crowded restaurant ratings on `(1.0, 10.0]` into a clearer, spread-out food rating distribution while preserving 100% of rank order.
+The web UI is a Svelte-based interactive explorer that visualizes how **Beli Ranking Normalization** transforms crowded restaurant ratings on `(1.0, 10.0]` into a clearer, spread-out food rating distribution while preserving 100% of rank order.
 
 ## Where the logic lives
 

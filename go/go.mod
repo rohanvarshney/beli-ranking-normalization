@@ -1,3 +1,3 @@
-module github.com/example/barn_heuristic/go
+module github.com/rohanvarshney/beli-ranking-normalization/go
 
 go 1.22

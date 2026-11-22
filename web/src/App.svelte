@@ -139,8 +139,8 @@
 <main>
   <header class="page-header">
     <div class="header-copy">
-      <span class="eyebrow">Ranking Normalization SDK · Visual Explorer</span>
-      <h1>How Score Normalization Reshapes a Food List</h1>
+      <span class="eyebrow">Beli Ranking Normalization · Visual Explorer</span>
+      <h1>How Beli Ranking Normalization Reshapes a Food List</h1>
       <p class="lead">
         Most diners pack nearly every restaurant between 7.0 and 9.0. Pick a heuristic below to watch crowded
         ratings stretch cleanly across the 1–10 food scale while keeping every rank in exact order.
@@ -149,7 +149,7 @@
 
     <a
       class="github-link"
-      href="https://github.com/rohanvarshney/barn_heuristic"
+      href="https://github.com/rohanvarshney/beli-ranking-normalization"
       target="_blank"
       rel="noopener noreferrer"
     >
@@ -224,7 +224,7 @@
   }
 
   .header-copy {
-    max-width: 880px;
+    max-width: 920px;
     display: grid;
     gap: 6px;
   }
@@ -240,7 +240,7 @@
   h1 {
     margin: 0;
     font-family: var(--font-display);
-    font-size: clamp(1.5rem, 2.75vw, 2.15rem);
+    font-size: clamp(1.45rem, 2.5vw, 2.05rem);
     line-height: 1.16;
     letter-spacing: -0.02em;
     color: var(--ink);
