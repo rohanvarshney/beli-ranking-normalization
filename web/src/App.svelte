@@ -1,119 +1,274 @@
 <script lang="ts">
-  import ControlsPanel from './components/ControlsPanel.svelte';
-  import DistributionView from './components/DistributionView.svelte';
-  import ScatterView from './components/ScatterView.svelte';
+  import FoodFlowChart from './components/FoodFlowChart.svelte';
+  import ImpactSummary from './components/ImpactSummary.svelte';
+  import RankedFoodList from './components/RankedFoodList.svelte';
+  import StrategySelector from './components/StrategySelector.svelte';
   import { createProgressStepper } from './lib/animation';
-  import { flattenUsers, generateMockUsers } from './lib/mockData';
+  import {
+    buildDatasetOptions,
+    buildRankedItems,
+    getDatasetItems,
+    getDefaultDatasetId,
+    type DatasetId,
+  } from './lib/foodInsights';
+  import { generateMockUsers } from './lib/mockData';
   import { interpolateScores, normalizeScores } from './lib/normalize';
   import type { Strategy } from './lib/types';
 
+  let seed = $state(1337);
+  const users = $derived(generateMockUsers(seed));
+  const datasetOptions = $derived(buildDatasetOptions(users));
+
+  let datasetId = $state<DatasetId>(getDefaultDatasetId(generateMockUsers(1337)));
   let strategy = $state<Strategy>('quantile_map');
   let bucketCount = $state(4);
-  let speedMs = $state(2200);
-  let seed = $state(1337);
+  let speedMs = $state(2000);
+  let progress = $state(1);
   let playing = $state(false);
-  let progress = $state(0);
+  let hoveredId = $state<string | null>(null);
+  let selectedId = $state<string | null>(null);
 
-  let items = $state(flattenUsers(generateMockUsers(1337)));
-  let beforeScores = $derived(items.map((x) => x.score));
-  let afterScores = $derived(normalizeScores(beforeScores, strategy, { bucketCount }));
-  let currentScores = $derived(interpolateScores(beforeScores, afterScores, progress));
+  const items = $derived(getDatasetItems(users, datasetId, seed));
+  const beforeScores = $derived(items.map((x) => x.score));
 
-  let baseScatterPoints = $derived(
-    items.map((item, i) => ({
-      x: i / Math.max(1, items.length - 1),
-      label: item.restaurantName,
-    })),
-  );
+  const afterByStrategy = $derived({
+    quantile_map: normalizeScores(beforeScores, 'quantile_map'),
+    zscore_sigmoid: normalizeScores(beforeScores, 'zscore_sigmoid'),
+    piecewise_bucket: normalizeScores(beforeScores, 'piecewise_bucket', { bucketCount }),
+  });
 
-  let stepper = createProgressStepper(
-    2200,
-    (t) => {
-      progress = t;
-    },
-    () => {
-      playing = false;
-    },
-  );
+  const afterScores = $derived(afterByStrategy[strategy]);
+  const currentScores = $derived(interpolateScores(beforeScores, afterScores, progress));
+  const ranked = $derived(buildRankedItems(items, beforeScores, afterByStrategy));
+
+  let stepper: ReturnType<typeof createProgressStepper> | null = null;
 
   $effect(() => {
-    stepper.stop();
+    return () => {
+      stepper?.stop();
+    };
+  });
+
+  const stopPlayback = () => {
+    stepper?.stop();
+    stepper = null;
+    playing = false;
+  };
+
+  const startPlaybackFrom = (startT: number, duration: number) => {
+    stepper?.stop();
+    playing = true;
     stepper = createProgressStepper(
-      speedMs,
+      duration,
       (t) => {
         progress = t;
       },
       () => {
         playing = false;
+        stepper = null;
       },
     );
-    if (playing) {
-      stepper.play();
-    }
-  });
+    stepper.play(startT);
+  };
 
-  const togglePlay = () => {
+  const handlePlayPause = () => {
     if (playing) {
-      playing = false;
-      stepper.stop();
+      stopPlayback();
       return;
     }
-    if (progress >= 1) progress = 0;
-    playing = true;
-    stepper.play();
+    const startT = progress >= 0.995 ? 0 : progress;
+    if (startT === 0) progress = 0;
+    startPlaybackFrom(startT, speedMs);
   };
 
-  const reset = () => {
-    playing = false;
-    stepper.stop();
-    progress = 0;
+  const handleScrub = (nextT: number) => {
+    stopPlayback();
+    progress = Math.max(0, Math.min(1, nextT));
   };
 
-  const regenerate = () => {
-    reset();
-    items = flattenUsers(generateMockUsers(seed));
-  };
-
-  const strategyDescription = $derived.by(() => {
-    if (strategy === 'quantile_map') {
-      return 'Quantile mapping repositions each restaurant by rank percentile to spread scores evenly.';
+  const handleSpeedChange = (nextMs: number) => {
+    speedMs = nextMs;
+    if (playing) {
+      startPlaybackFrom(progress, nextMs);
     }
-    if (strategy === 'zscore_sigmoid') {
-      return 'Z-score + sigmoid smooths score crowding by standardizing values then rescaling.';
+  };
+
+  const handleSelectStrategy = (next: Strategy) => {
+    strategy = next;
+    if (!playing && progress === 0) {
+      progress = 1;
     }
-    return 'Piecewise bucket allocates output range based on bucket density and smooth interpolation.';
-  });
+  };
+
+  const handleBucketCountChange = (nextCount: number) => {
+    bucketCount = nextCount;
+    if (!playing && progress === 0) {
+      progress = 1;
+    }
+  };
+
+  const handleDatasetChange = (nextId: DatasetId) => {
+    stopPlayback();
+    hoveredId = null;
+    selectedId = null;
+    datasetId = nextId;
+    progress = 1;
+  };
+
+  const applyNewSeed = (nextSeed: number) => {
+    stopPlayback();
+    hoveredId = null;
+    selectedId = null;
+    seed = nextSeed;
+    const nextUsers = generateMockUsers(nextSeed);
+    if (datasetId.startsWith('diner:')) {
+      const idx = Number.parseInt(datasetId.slice('diner:'.length), 10);
+      if (!Number.isFinite(idx) || idx < 0 || idx >= nextUsers.length) {
+        datasetId = getDefaultDatasetId(nextUsers);
+      }
+    }
+    progress = 1;
+  };
+
+  const handleShuffleSeed = () => {
+    const nextSeed = ((seed * 1664525 + 1013904223) >>> 0) % 9000 + 1000;
+    applyNewSeed(nextSeed === seed ? nextSeed + 1 : nextSeed);
+  };
 </script>
 
 <main>
-  <header>
-    <h1>Realtime Ranking Normalization Visualizer</h1>
-    <p>
-      See how restaurant scores redistribute from crowded ranges into a normalized spread across all three
-      algorithms.
-    </p>
-    <p>
-      <a href="https://github.com/rohanvarshney/barn_heuristic" target="_blank" rel="noopener noreferrer">View Repository on GitHub</a>
-    </p>
+  <header class="page-header">
+    <div class="header-copy">
+      <span class="eyebrow">Ranking Normalization SDK · Visual Explorer</span>
+      <h1>How Score Normalization Reshapes a Food List</h1>
+      <p class="lead">
+        Most diners pack nearly every restaurant between 7.0 and 9.0. Pick a heuristic below to watch crowded
+        ratings stretch cleanly across the 1–10 food scale while keeping every rank in exact order.
+      </p>
+    </div>
+
+    <a
+      class="github-link"
+      href="https://github.com/rohanvarshney/barn_heuristic"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      GitHub ↗
+    </a>
   </header>
 
-  <ControlsPanel
-    bind:strategy
-    bind:bucketCount
-    bind:speedMs
-    bind:seed
-    {playing}
-    onPlayPause={togglePlay}
-    onReset={reset}
-    onRegenerate={regenerate}
+  <StrategySelector
+    {strategy}
+    {bucketCount}
+    onSelectStrategy={handleSelectStrategy}
+    onBucketCountChange={handleBucketCountChange}
   />
 
-  <section class="meta">
-    <p><strong>Progress:</strong> {(progress * 100).toFixed(1)}%</p>
-    <p><strong>Data points:</strong> {items.length} restaurants across 10 deterministic users</p>
-    <p><strong>Algorithm:</strong> {strategyDescription}</p>
-  </section>
+  <FoodFlowChart
+    {ranked}
+    {beforeScores}
+    {currentScores}
+    {afterScores}
+    {strategy}
+    {bucketCount}
+    {progress}
+    {playing}
+    {speedMs}
+    {datasetId}
+    {datasetOptions}
+    {seed}
+    {hoveredId}
+    {selectedId}
+    onPlayPause={handlePlayPause}
+    onScrub={handleScrub}
+    onSpeedChange={handleSpeedChange}
+    onDatasetChange={handleDatasetChange}
+    onSeedChange={applyNewSeed}
+    onShuffleSeed={handleShuffleSeed}
+    onHover={(id) => (hoveredId = id)}
+    onSelect={(id) => (selectedId = id)}
+  />
 
-  <ScatterView basePoints={baseScatterPoints} scores={currentScores} title="Restaurant Score Motion (Before → After)" />
-  <DistributionView {beforeScores} {currentScores} {afterScores} bins={20} />
+  <div class="details-grid">
+    <RankedFoodList
+      {ranked}
+      {currentScores}
+      {strategy}
+      {hoveredId}
+      {selectedId}
+      onHover={(id) => (hoveredId = id)}
+      onSelect={(id) => (selectedId = id)}
+    />
+
+    <ImpactSummary
+      {ranked}
+      {beforeScores}
+      {currentScores}
+      {strategy}
+      {progress}
+      {hoveredId}
+      {selectedId}
+      onSelectStrategy={handleSelectStrategy}
+    />
+  </div>
 </main>
+
+<style>
+  .page-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 4px 2px 2px;
+  }
+
+  .header-copy {
+    max-width: 880px;
+    display: grid;
+    gap: 6px;
+  }
+
+  .eyebrow {
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+  }
+
+  h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 2.75vw, 2.15rem);
+    line-height: 1.16;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  .lead {
+    margin: 0;
+    font-size: 0.96rem;
+    line-height: 1.5;
+    color: var(--ink-muted);
+  }
+
+  .github-link {
+    text-decoration: none;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 14px;
+    box-shadow: 0 1px 2px rgba(31, 27, 22, 0.04);
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+    white-space: nowrap;
+  }
+
+  .github-link:hover {
+    background: var(--surface-subtle);
+    border-color: var(--border-strong);
+  }
+</style>

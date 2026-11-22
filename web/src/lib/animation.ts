@@ -3,6 +3,11 @@ export type AnimatorState = {
   playing: boolean;
 };
 
+export const easeInOutCubic = (t: number): number => {
+  const x = Math.max(0, Math.min(1, t));
+  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+};
+
 export const createProgressStepper = (
   durationMs: number,
   onUpdate: (t: number) => void,
@@ -11,14 +16,18 @@ export const createProgressStepper = (
   let rafId = 0;
   let start = 0;
   let running = false;
+  let startT = 0;
+  let activeDuration = durationMs;
 
   const tick = (timestamp: number) => {
     if (!running) return;
     if (!start) start = timestamp;
     const elapsed = timestamp - start;
-    const t = Math.max(0, Math.min(1, elapsed / durationMs));
+    const f = Math.max(0, Math.min(1, elapsed / activeDuration));
+    const eased = easeInOutCubic(f);
+    const t = f >= 1 ? 1 : startT + (1 - startT) * eased;
     onUpdate(t);
-    if (t < 1) {
+    if (f < 1) {
       rafId = requestAnimationFrame(tick);
     } else {
       running = false;
@@ -27,8 +36,11 @@ export const createProgressStepper = (
   };
 
   return {
-    play() {
+    play(fromT = 0) {
       if (running) return;
+      const clamped = Math.max(0, Math.min(1, fromT));
+      startT = clamped >= 0.999 ? 0 : clamped;
+      activeDuration = Math.max(120, (1 - startT) * durationMs);
       running = true;
       start = 0;
       rafId = requestAnimationFrame(tick);
@@ -36,6 +48,7 @@ export const createProgressStepper = (
     stop() {
       running = false;
       if (rafId) cancelAnimationFrame(rafId);
+      rafId = 0;
     },
   };
 };
