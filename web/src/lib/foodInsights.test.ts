@@ -7,6 +7,7 @@ import {
   computeDensityCurve,
   computeDistributionSummary,
   computePiecewiseBuckets,
+  FOOD_TIERS,
   formatDatasetNames,
   getDatasetItems,
   getDefaultDatasetId,
@@ -20,14 +21,18 @@ import { MAX_SCORE, MIN_SCORE, normalizeScores } from './normalize';
 
 describe('foodInsights', () => {
   it('maps boundary scores cleanly to contiguous food tiers', () => {
-    expect(getTierForScore(1.0001).id).toBe('skip');
-    expect(getTierForScore(3.99).id).toBe('skip');
-    expect(getTierForScore(4.0).id).toBe('okay');
-    expect(getTierForScore(6.49).id).toBe('okay');
-    expect(getTierForScore(6.5).id).toBe('good');
-    expect(getTierForScore(8.49).id).toBe('good');
-    expect(getTierForScore(8.5).id).toBe('all_time');
-    expect(getTierForScore(10.0).id).toBe('all_time');
+    expect(FOOD_TIERS).toHaveLength(3);
+    expect(getTierForScore(0.1).id).toBe('dislike');
+    expect(getTierForScore(1.0001).id).toBe('dislike');
+    expect(getTierForScore(3.3).id).toBe('dislike');
+    expect(getTierForScore(3.34).id).toBe('dislike');
+    expect(getTierForScore(3.35).id).toBe('okay');
+    expect(getTierForScore(3.4).id).toBe('okay');
+    expect(getTierForScore(6.6).id).toBe('okay');
+    expect(getTierForScore(6.64).id).toBe('okay');
+    expect(getTierForScore(6.65).id).toBe('like');
+    expect(getTierForScore(6.7).id).toBe('like');
+    expect(getTierForScore(10.0).id).toBe('like');
   });
 
   it('parses and formats restaurant names and cuisines cleanly', () => {

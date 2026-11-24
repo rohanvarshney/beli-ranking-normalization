@@ -82,6 +82,21 @@
     return padL + ((clamped - 1.0) / 9.0) * plotW;
   };
 
+  const tierGradientStops = FOOD_TIERS.map((tier) => {
+    const startPct = (((scoreToX(tier.min) - padL) / plotW) * 100).toFixed(2);
+    const endPct = (((scoreToX(tier.max) - padL) / plotW) * 100).toFixed(2);
+    const fillOpacity = tier.id === 'okay' ? 0.28 : tier.id === 'like' ? 0.24 : 0.22;
+    return {
+      id: tier.id,
+      color: tier.color,
+      startPct: `${startPct}%`,
+      endPct: `${endPct}%`,
+      fillOpacity,
+    };
+  });
+
+  const tierBoundaries = FOOD_TIERS.slice(0, -1).map((tier) => tier.max);
+
   const clampCenter = (cx: number, halfWidth: number): number =>
     Math.max(padL + halfWidth, Math.min(padL + plotW - halfWidth, cx));
 
@@ -369,14 +384,10 @@
           x2={padL + plotW}
           y2="0"
         >
-          <stop offset="0%" stop-color="#C04545" stop-opacity="0.22" />
-          <stop offset="33.33%" stop-color="#C04545" stop-opacity="0.22" />
-          <stop offset="33.33%" stop-color="#A87514" stop-opacity="0.22" />
-          <stop offset="61.11%" stop-color="#A87514" stop-opacity="0.22" />
-          <stop offset="61.11%" stop-color="#C8611B" stop-opacity="0.24" />
-          <stop offset="83.33%" stop-color="#C8611B" stop-opacity="0.24" />
-          <stop offset="83.33%" stop-color="#1D7A52" stop-opacity="0.26" />
-          <stop offset="100%" stop-color="#1D7A52" stop-opacity="0.26" />
+          {#each tierGradientStops as stop (stop.id)}
+            <stop offset={stop.startPct} stop-color={stop.color} stop-opacity={stop.fillOpacity} />
+            <stop offset={stop.endPct} stop-color={stop.color} stop-opacity={stop.fillOpacity} />
+          {/each}
         </linearGradient>
 
         <linearGradient
@@ -387,14 +398,10 @@
           x2={padL + plotW}
           y2="0"
         >
-          <stop offset="0%" stop-color="#C04545" />
-          <stop offset="33.33%" stop-color="#C04545" />
-          <stop offset="33.33%" stop-color="#A87514" />
-          <stop offset="61.11%" stop-color="#A87514" />
-          <stop offset="61.11%" stop-color="#C8611B" />
-          <stop offset="83.33%" stop-color="#C8611B" />
-          <stop offset="83.33%" stop-color="#1D7A52" />
-          <stop offset="100%" stop-color="#1D7A52" />
+          {#each tierGradientStops as stop (stop.id)}
+            <stop offset={stop.startPct} stop-color={stop.color} />
+            <stop offset={stop.endPct} stop-color={stop.color} />
+          {/each}
         </linearGradient>
 
         <filter id="pill-shadow" x="-10%" y="-20%" width="120%" height="160%">
@@ -408,7 +415,9 @@
         {@const xEnd = scoreToX(tier.max)}
         {@const bandW = xEnd - xStart}
         {@const midX = (xStart + xEnd) / 2}
-        {@const pillW = Math.min(bandW - 10, 146)}
+        {@const pillLabel =
+          bandW < 175 ? `${tier.shortLabel} · ${tier.rangeLabel}` : `${tier.label} · ${tier.rangeLabel}`}
+        {@const pillW = Math.min(bandW - 10, Math.max(138, pillLabel.length * 6.8 + 24))}
 
         <rect
           x={xStart}
@@ -434,15 +443,15 @@
             y="3.5"
             text-anchor="middle"
             class="tier-pill-text"
-            fill={tier.color}
+            fill={tier.textColor}
           >
-            {bandW < 175 ? `${tier.shortLabel} · ${tier.rangeLabel}` : `${tier.label} · ${tier.rangeLabel}`}
+            {pillLabel}
           </text>
         </g>
       {/each}
 
       <!-- Integer grid hairlines and tier boundary dividers -->
-      {#each [2, 3, 5, 6, 7, 8, 9] as tick}
+      {#each [2, 3, 4, 5, 6, 7, 8, 9] as tick}
         <line
           x1={scoreToX(tick)}
           y1="38"
@@ -453,7 +462,7 @@
         />
       {/each}
 
-      {#each [4.0, 6.5, 8.5] as boundary}
+      {#each tierBoundaries as boundary}
         <line
           x1={scoreToX(boundary)}
           y1="38"

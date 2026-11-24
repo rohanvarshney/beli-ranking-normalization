@@ -38,7 +38,7 @@ Three visual strategy cards with mini distribution shape thumbnails and plain-En
 
 ### 2) Mirrored Food Rating Flow Chart (`FoodFlowChart.svelte`)
 
-A unified three-lane SVG across the `(1.0, 10.0]` food scale divided into four intuitive food tiers (**Skip** `1.0–4.0`, **It's Okay** `4.0–6.5`, **Really Good** `6.5–8.5`, **All-Time** `8.5–10`):
+A unified three-lane SVG across the `(1.0, 10.0]` food scale divided into Beli's three buckets (**I Don't Like** `0.1–3.3`, **It's Okay** `3.4–6.6`, **I Like** `6.7–10.0`):
 - **Top Lane (`RAW / Before`)**: Reflected Gaussian KDE ridge + beeswarm restaurant dots + Middle 50% (IQR) callout bracket.
 - **Middle Lane (`ORDER · 100% locked`)**: Non-crossing cubic Bezier flow ribbons tracking each restaurant from its raw position to its live normalized position (plus density-proportional bucket funnel corridors when `piecewise_bucket` is active).
 - **Bottom Lane (`NORMALIZED / Live Morph`)**: Mirrored KDE ridge on the same Y-scale + animated beeswarm dots + updated Middle 50% (IQR) bracket.
@@ -50,7 +50,7 @@ Displays restaurants in exact descending rank order (`#1` to `#N`) with filter t
 ### 4) Impact Summary (`ImpactSummary.svelte`)
 
 Summarizes:
-- **Where Your Restaurants Land**: Before vs. Now stacked tier distribution bars and counts across the 4 food tiers.
+- **Where Your Restaurants Land**: Before vs. Now stacked tier distribution bars and counts across the 3 Beli buckets.
 - **Separation & Order Guarantee**: Live verification that rank order is 100% intact, alongside Middle 50% spread and typical neighbor gap changes.
 - **Compare Heuristics on One Spot**: Side-by-side output scores across all 3 heuristics for the spotlighted spot plus a 3-anchor (`#1`, median, `#N`) snapshot.
 

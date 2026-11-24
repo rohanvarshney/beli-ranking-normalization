@@ -88,7 +88,7 @@ func main() {
 - Live demo (GitHub Pages): `https://rohanvarshney.github.io/beli-ranking-normalization/`
 - Implementation guide: `docs/web-ui-visualizer.md`
 - Features:
-  - mirrored food-tier flow chart (`RAW` → `ORDER 100% locked` Bezier ribbons → `NORMALIZED`) across **Skip**, **It's Okay**, **Really Good**, and **All-Time**
+  - mirrored food-tier flow chart (`RAW` → `ORDER 100% locked` Bezier ribbons → `NORMALIZED`) across Beli's three buckets (**I Don't Like**, **It's Okay**, and **I Like**)
   - interactive strategy cards (`quantile_map`, `zscore_sigmoid`, `piecewise_bucket`) with live morph scrubber and heuristic comparison
   - ranked food list spotlighting neighbor separation and tier shifts across deterministic diners and rating-style presets
   - playback speed (`0.5×`, `1×`, `2×`) and piecewise bucket controls (`2–12` buckets)

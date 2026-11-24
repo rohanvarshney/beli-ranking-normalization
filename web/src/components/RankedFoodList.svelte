@@ -178,7 +178,7 @@
         <div class="spotlight-scores num">
           <span class="raw-score">{sc.item.beforeScore.toFixed(2)}</span>
           <span class="arrow">→</span>
-          <span class="new-score" style={`color: ${sc.currTier.color}`}>
+          <span class="new-score" style={`color: ${sc.currTier.textColor}`}>
             {sc.currScore.toFixed(2)}
           </span>
           <span class="delta-chip" class:up={sc.delta > 0.005} class:down={sc.delta < -0.005}>
@@ -190,10 +190,10 @@
       <div class="spotlight-meta">
         <span class="tier-shift">
           Tier:
-          <strong style={`color: ${sc.rawTier.color}`}>{sc.rawTier.label}</strong>
+          <strong style={`color: ${sc.rawTier.textColor}`}>{sc.rawTier.label}</strong>
           {#if sc.rawTier.id !== sc.currTier.id}
             <span class="arrow">→</span>
-            <strong style={`color: ${sc.currTier.color}`}>{sc.currTier.label}</strong>
+            <strong style={`color: ${sc.currTier.textColor}`}>{sc.currTier.label}</strong>
           {:else}
             <span class="same-tier">(unchanged)</span>
           {/if}
@@ -289,7 +289,7 @@
           <span class="score-col num">
             <span class="before-val">{row.beforeScore.toFixed(1)}</span>
             <span class="score-arrow">→</span>
-            <span class="curr-val" style={`color: ${currTier.color}`}>
+            <span class="curr-val" style={`color: ${currTier.textColor}`}>
               {currScore.toFixed(1)}
             </span>
             <span class="delta-mini" class:up={delta > 0.05} class:down={delta < -0.05}>

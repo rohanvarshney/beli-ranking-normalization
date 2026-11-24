@@ -12,10 +12,9 @@
   --accent-hover: #ae4b10;
   --accent-soft: #fdf0e4;
 
-  --tier-alltime: #1d7a52;
-  --tier-good: #c8611b;
-  --tier-okay: #a87514;
-  --tier-skip: #c04545;
+  --tier-like: #16a34a;
+  --tier-okay: #eab308;
+  --tier-dislike: #dc2626;
 
   --font-display: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
   --font-sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

@@ -1,7 +1,7 @@
 import { MAX_SCORE, MIN_SCORE } from './normalize';
 import type { RestaurantScore, Strategy, UserRatings } from './types';
 
-export type FoodTierId = 'skip' | 'okay' | 'good' | 'all_time';
+export type FoodTierId = 'dislike' | 'okay' | 'like';
 
 export type FoodTier = {
   id: FoodTierId;
@@ -11,6 +11,7 @@ export type FoodTier = {
   shortLabel: string;
   rangeLabel: string;
   color: string;
+  textColor: string;
   softBg: string;
   border: string;
   bandBg: string;
@@ -18,62 +19,52 @@ export type FoodTier = {
 
 export const FOOD_TIERS: FoodTier[] = [
   {
-    id: 'skip',
-    min: 1.0,
-    max: 4.0,
-    label: 'Skip',
-    shortLabel: 'Skip',
-    rangeLabel: '1.0–4.0',
-    color: '#C04545',
-    softBg: '#FCECEC',
-    border: '#F2C6C6',
-    bandBg: 'rgba(192, 69, 69, 0.045)',
+    id: 'dislike',
+    min: 0.1,
+    max: 3.35,
+    label: "I Don't Like",
+    shortLabel: "Don't Like",
+    rangeLabel: '0.1–3.3',
+    color: '#DC2626',
+    textColor: '#B91C1C',
+    softBg: '#FEE2E2',
+    border: '#FCA5A5',
+    bandBg: 'rgba(220, 38, 38, 0.05)',
   },
   {
     id: 'okay',
-    min: 4.0,
-    max: 6.5,
+    min: 3.35,
+    max: 6.65,
     label: "It's Okay",
     shortLabel: 'Okay',
-    rangeLabel: '4.0–6.5',
-    color: '#A87514',
-    softBg: '#FBF4DF',
-    border: '#EBD8A0',
-    bandBg: 'rgba(184, 134, 11, 0.045)',
+    rangeLabel: '3.4–6.6',
+    color: '#EAB308',
+    textColor: '#9A6F00',
+    softBg: '#FEF9C3',
+    border: '#FDE047',
+    bandBg: 'rgba(234, 179, 8, 0.065)',
   },
   {
-    id: 'good',
-    min: 6.5,
-    max: 8.5,
-    label: 'Really Good',
-    shortLabel: 'Good',
-    rangeLabel: '6.5–8.5',
-    color: '#C8611B',
-    softBg: '#FDF0E4',
-    border: '#F2CBA8',
-    bandBg: 'rgba(208, 106, 34, 0.045)',
-  },
-  {
-    id: 'all_time',
-    min: 8.5,
+    id: 'like',
+    min: 6.65,
     max: 10.0,
-    label: 'All-Time',
-    shortLabel: 'All-Time',
-    rangeLabel: '8.5–10',
-    color: '#1D7A52',
-    softBg: '#E6F5EE',
-    border: '#B1DEC8',
-    bandBg: 'rgba(29, 122, 82, 0.05)',
+    label: 'I Like',
+    shortLabel: 'I Like',
+    rangeLabel: '6.7–10.0',
+    color: '#16A34A',
+    textColor: '#15803D',
+    softBg: '#DCFCE7',
+    border: '#86EFAC',
+    bandBg: 'rgba(22, 163, 74, 0.05)',
   },
 ];
 
 export const FOOD_TIERS_DESCENDING: FoodTier[] = [...FOOD_TIERS].reverse();
 
 export const getTierForScore = (score: number): FoodTier => {
-  if (score < 4.0) return FOOD_TIERS[0];
-  if (score < 6.5) return FOOD_TIERS[1];
-  if (score < 8.5) return FOOD_TIERS[2];
-  return FOOD_TIERS[3];
+  if (score < 3.35) return FOOD_TIERS[0];
+  if (score < 6.65) return FOOD_TIERS[1];
+  return FOOD_TIERS[2];
 };
 
 export type StrategyMeta = {
@@ -638,12 +629,9 @@ const quantileSorted = (sorted: number[], q: number): number => {
 
 export const computeDistributionSummary = (scores: number[]): DistributionSummary => {
   const n = scores.length;
-  const tierCounts = new Map<FoodTierId, number>([
-    ['all_time', 0],
-    ['good', 0],
-    ['okay', 0],
-    ['skip', 0],
-  ]);
+  const tierCounts = new Map<FoodTierId, number>(
+    FOOD_TIERS_DESCENDING.map((tier) => [tier.id, 0]),
+  );
 
   if (n === 0) {
     return {

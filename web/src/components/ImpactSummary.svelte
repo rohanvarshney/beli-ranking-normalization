@@ -145,7 +145,7 @@
           <div class="tier-count-cell num">
             <span class="muted-count">{prevRow.count} ({Math.round(prevRow.pct)}%)</span>
             <span class="arrow">→</span>
-            <strong style={`color: ${currRow.tier.color}`}>
+            <strong style={`color: ${currRow.tier.textColor}`}>
               {currRow.count} ({Math.round(currRow.pct)}%)
             </strong>
           </div>
@@ -216,7 +216,7 @@
         <h3>Compare Heuristics on One Spot</h3>
         <span class="spot-chip num">
           #{spotlightSpot.rank} {spotlightSpot.displayName} · Raw
-          <strong style={`color: ${rawTier.color}`}>
+          <strong style={`color: ${rawTier.textColor}`}>
             {spotlightSpot.beforeScore.toFixed(2)}
           </strong>
         </span>
@@ -239,7 +239,7 @@
               <span class="compare-tag">{meta.shortTag}</span>
             </div>
             <div class="compare-right num">
-              <strong style={`color: ${targetTier.color}`}>{targetScore.toFixed(2)}</strong>
+              <strong style={`color: ${targetTier.textColor}`}>{targetScore.toFixed(2)}</strong>
               <span class="compare-delta">
                 ({delta >= 0 ? '+' : ''}{delta.toFixed(2)})
               </span>

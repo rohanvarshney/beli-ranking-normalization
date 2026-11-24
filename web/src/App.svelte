@@ -138,23 +138,38 @@
 
 <main>
   <header class="page-header">
+    <div class="header-topbar">
+      <a
+        class="brand-home-link"
+        href="https://rohanvarshney.github.io"
+        title="Rohan Varshney — Personal Website"
+        aria-label="Back to rohanvarshney.github.io"
+      >
+        <img
+          src="https://rohanvarshney.github.io/assets/freehand-signature-3.png"
+          alt="Rohan Varshney"
+          class="brand-signature"
+        />
+      </a>
+
+      <a
+        class="github-link"
+        href="https://github.com/rohanvarshney/beli-ranking-normalization"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        GitHub ↗
+      </a>
+    </div>
+
     <div class="header-copy">
       <span class="eyebrow">Beli Ranking Normalization · Visual Explorer</span>
-      <h1>How Beli Ranking Normalization Reshapes a Food List</h1>
+      <h1>How Ranking Normalization Reshapes your Beli List</h1>
       <p class="lead">
         Most diners pack nearly every restaurant between 7.0 and 9.0. Pick a heuristic below to watch crowded
         ratings stretch cleanly across the 1–10 food scale while keeping every rank in exact order.
       </p>
     </div>
-
-    <a
-      class="github-link"
-      href="https://github.com/rohanvarshney/beli-ranking-normalization"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      GitHub ↗
-    </a>
   </header>
 
   <StrategySelector
@@ -215,12 +230,37 @@
 
 <style>
   .page-header {
+    display: grid;
+    gap: 10px;
+    padding: 2px 2px 2px;
+  }
+
+  .header-topbar {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 4px 2px 2px;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-home-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: opacity 0.15s ease;
+  }
+
+  .brand-home-link:hover {
+    opacity: 0.72;
+  }
+
+  .brand-signature {
+    display: block;
+    height: 36px;
+    width: auto;
+    object-fit: contain;
+    mix-blend-mode: multiply;
   }
 
   .header-copy {
