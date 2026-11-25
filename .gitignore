@@ -50,3 +50,8 @@ coverage.out
 .env
 .env.*
 *.local
+
+# Local Beli session tokens & exported ranking manifests (private user data)
+.beli-session*.json
+data/beli-manifest*.json
+beli-manifest*.json

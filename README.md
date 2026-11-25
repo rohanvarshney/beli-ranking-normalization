@@ -93,6 +93,16 @@ func main() {
   - ranked food list spotlighting neighbor separation and tier shifts across deterministic diners and rating-style presets
   - playback speed (`0.5×`, `1×`, `2×`) and piecewise bucket controls (`2–12` buckets)
 
+## Exporting your own Beli rankings
+
+To snapshot all of your personal Beli rankings and associated metadata (business details, notes, photos, visit dates, tagged users, labels, bookmarks, lists, and raw API payloads) to a local gitignored JSON manifest (`data/beli-manifest.json`):
+
+```bash
+python3 scripts/export_beli_manifest.py
+```
+
+See [docs/beli-manifest-export.md](docs/beli-manifest-export.md) for authentication options (email, phone, 7-day refresh token caching), detail levels (`fast`, `full`, `max`), checkpoint/resume, and the manifest schema.
+
 ## Complexity
 
 - Sorting-based strategies are `O(n log n)`.
