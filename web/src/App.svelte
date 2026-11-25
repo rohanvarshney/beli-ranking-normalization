@@ -2,6 +2,8 @@
   import signatureImg from './assets/freehand-signature-3.png';
   import FoodFlowChart from './components/FoodFlowChart.svelte';
   import ImpactSummary from './components/ImpactSummary.svelte';
+  import InfoBanner from './components/InfoBanner.svelte';
+  import InfoButton from './components/InfoButton.svelte';
   import RankedFoodList from './components/RankedFoodList.svelte';
   import StrategySelector from './components/StrategySelector.svelte';
   import { createProgressStepper } from './lib/animation';
@@ -28,6 +30,7 @@
   let playing = $state(false);
   let hoveredId = $state<string | null>(null);
   let selectedId = $state<string | null>(null);
+  let showHeaderInfo = $state(false);
 
   const items = $derived(getDatasetItems(users, datasetId, seed));
   const beforeScores = $derived(items.map((x) => x.score));
@@ -164,12 +167,35 @@
     </div>
 
     <div class="header-copy">
-      <span class="eyebrow">Beli Ranking Normalization · Visual Explorer</span>
-      <h1>How Ranking Normalization Reshapes your Beli List</h1>
+      <div class="eyebrow-row">
+        <span class="eyebrow">Beli Score Explorer</span>
+        <InfoButton
+          open={showHeaderInfo}
+          onToggle={() => (showHeaderInfo = !showHeaderInfo)}
+          label="About ranking normalization"
+          controlsId="header-info-banner"
+          compact
+        />
+      </div>
+      <h1>How Score Rescaling Reshapes Your Beli List</h1>
       <p class="lead">
-        Most diners pack nearly every restaurant between 7.0 and 9.0. Pick a heuristic below to watch crowded
-        ratings stretch cleanly across the 1–10 food scale while keeping every rank in exact order.
+        Most diners pack nearly every restaurant between 7.0 and 9.0. Pick a scoring style below to
+        stretch crowded ratings across the 1–10 scale—without changing a single spot's rank.
       </p>
+      {#if showHeaderInfo}
+        <InfoBanner
+          id="header-info-banner"
+          title="Technical note · Ranking normalization"
+          onClose={() => (showHeaderInfo = false)}
+        >
+          <p>
+            Under the hood, each style performs
+            <code class="tech-term">monotonic ranking normalization</code> onto
+            <code class="tech-term">(1.0, 10.0]</code>, guaranteeing
+            <code class="tech-term">raw_a &lt; raw_b ⇒ new_a ≤ new_b</code> across all pairs.
+          </p>
+        </InfoBanner>
+      {/if}
     </div>
   </header>
 
@@ -268,6 +294,12 @@
     max-width: 920px;
     display: grid;
     gap: 6px;
+  }
+
+  .eyebrow-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .eyebrow {

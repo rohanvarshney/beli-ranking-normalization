@@ -14,6 +14,8 @@
     type RankedRestaurantBase,
   } from '../lib/foodInsights';
   import type { Strategy } from '../lib/types';
+  import InfoBanner from './InfoBanner.svelte';
+  import InfoButton from './InfoButton.svelte';
 
   type Props = {
     ranked: RankedRestaurantBase[];
@@ -64,6 +66,8 @@
     onHover,
     onSelect,
   }: Props = $props();
+
+  let showChartInfo = $state(false);
 
   const width = 1040;
   const height = 432;
@@ -252,23 +256,23 @@
   <div class="toolbar">
     <div class="toolbar-group">
       <label class="inline-field">
-        <span class="field-label">Dataset</span>
+        <span class="field-label">List</span>
         <select
           value={datasetId}
           aria-label="Select diner or rating style preset"
           onchange={(e) => onDatasetChange((e.currentTarget as HTMLSelectElement).value as DatasetId)}
         >
-          <optgroup label="Deterministic Diners">
+          <optgroup label="Sample Beli Diners">
             {#each dinerOptions as opt (opt.id)}
               <option value={opt.id}>{opt.label}</option>
             {/each}
           </optgroup>
-          <optgroup label="Combined Pool">
+          <optgroup label="Everyone Combined">
             {#each aggregateOptions as opt (opt.id)}
               <option value={opt.id}>{opt.label}</option>
             {/each}
           </optgroup>
-          <optgroup label="Rating-Style Presets">
+          <optgroup label="Rating Habits">
             {#each presetOptions as opt (opt.id)}
               <option value={opt.id}>{opt.label}</option>
             {/each}
@@ -276,24 +280,16 @@
         </select>
       </label>
 
-      <label class="inline-field seed-field">
-        <span class="field-label">Seed</span>
-        <input
-          type="number"
-          min="1"
-          step="1"
-          value={seed}
-          aria-label="Dataset seed"
-          onchange={(e) => {
-            const parsed = Number.parseInt((e.currentTarget as HTMLInputElement).value, 10);
-            if (Number.isFinite(parsed) && parsed >= 1) onSeedChange(parsed);
-          }}
-        />
-      </label>
-
-      <button type="button" class="btn-subtle" onclick={onShuffleSeed} title="Generate new seeded dataset">
-        ↻ Shuffle
+      <button type="button" class="btn-subtle" onclick={onShuffleSeed} title="Generate a new sample list">
+        ↻ New Sample
       </button>
+
+      <InfoButton
+        open={showChartInfo}
+        onToggle={() => (showChartInfo = !showChartInfo)}
+        label="Chart statistics and sample seed"
+        controlsId="chart-info-banner"
+      />
     </div>
 
     <div class="toolbar-group">
@@ -328,9 +324,9 @@
         {#if playing}
           ❚❚ Pause
         {:else if progress >= 0.995}
-          ↻ Replay Morph
+          ↻ Replay
         {:else}
-          ▶ Animate Morph
+          ▶ Animate
         {/if}
       </button>
     </div>
@@ -343,7 +339,7 @@
       class:active={progress <= 0.01}
       onclick={() => onScrub(0)}
     >
-      Raw (0%)
+      Original (0%)
     </button>
 
     <input
@@ -352,7 +348,7 @@
       max="1"
       step="0.005"
       value={progress}
-      aria-label="Morph progress between raw and normalized scores"
+      aria-label="Morph progress between original and adjusted scores"
       oninput={(e) => onScrub(Number((e.currentTarget as HTMLInputElement).value))}
     />
 
@@ -364,9 +360,50 @@
       class:active={progress >= 0.99}
       onclick={() => onScrub(1)}
     >
-      Normalized (100%)
+      Adjusted (100%)
     </button>
   </div>
+
+  {#if showChartInfo}
+    <InfoBanner
+      id="chart-info-banner"
+      title="Chart stats & sample seed"
+      onClose={() => (showChartInfo = false)}
+    >
+      <ul class="info-list">
+        <li>
+          <code class="tech-term">KDE</code> Smooth curves: Kernel Density Estimate showing where scores cluster.
+        </li>
+        <li class="num">
+          <code class="tech-term">IQR (p25–p75)</code> Middle 50%: Interquartile range ({beforeSummary.p25.toFixed(2)}–{beforeSummary.p75.toFixed(2)} before → {currentSummary.p25.toFixed(2)}–{currentSummary.p75.toFixed(2)} now).
+        </li>
+        <li class="num">
+          <code class="tech-term">Median (p50)</code> mid pill: 50th percentile score ({beforeSummary.median.toFixed(2)} → {currentSummary.median.toFixed(2)}).
+        </li>
+        <li class="num">
+          <code class="tech-term">Monotonicity</code> Flow lines: Non-crossing Bezier curves confirming rank order is preserved across all {ranked.length.toLocaleString()} spots.
+        </li>
+      </ul>
+
+      <div class="seed-row">
+        <span class="seed-hint">Sample lists are generated deterministically from a PRNG seed.</span>
+        <label class="inline-field seed-field">
+          <span class="field-label">Seed</span>
+          <input
+            type="number"
+            min="1"
+            step="1"
+            value={seed}
+            aria-label="Dataset seed"
+            onchange={(e) => {
+              const parsed = Number.parseInt((e.currentTarget as HTMLInputElement).value, 10);
+              if (Number.isFinite(parsed) && parsed >= 1) onSeedChange(parsed);
+            }}
+          />
+        </label>
+      </div>
+    </InfoBanner>
+  {/if}
 
   <div class="mobile-scroll-hint">Swipe chart horizontally to explore details →</div>
   <div class="svg-wrap">
@@ -481,24 +518,24 @@
 
       <!-- Left margin lane annotations -->
       <g class="lane-labels">
-        <text x="10" y="96" class="lane-eyebrow">RAW</text>
-        <text x="10" y="112" class="lane-sub">Before</text>
+        <text x="10" y="96" class="lane-eyebrow">BEFORE</text>
+        <text x="10" y="112" class="lane-sub">Original</text>
         <rect x="10" y="121" width="66" height="20" rx="6" fill="#F4EFE6" stroke="#E5DDD0" />
         <text x="43" y="135" text-anchor="middle" class="lane-med num">
-          med {beforeSummary.median.toFixed(1)}
+          mid {beforeSummary.median.toFixed(1)}
         </text>
 
         <rect x="10" y="189" width="70" height="36" rx="8" fill="#FBF8F3" stroke="#E8E0D4" />
-        <text x="45" y="204" text-anchor="middle" class="order-title">ORDER</text>
+        <text x="45" y="204" text-anchor="middle" class="order-title">RANKS</text>
         <text x="45" y="217" text-anchor="middle" class="order-sub">100% locked</text>
 
         <text x="10" y="290" class="lane-eyebrow active-eyebrow">
-          {progress <= 0.01 ? 'RAW' : progress >= 0.995 ? 'NORMALIZED' : 'MORPHING'}
+          {progress <= 0.01 ? 'BEFORE' : progress >= 0.995 ? 'AFTER' : 'MOVING'}
         </text>
         <text x="10" y="306" class="lane-sub num">{Math.round(progress * 100)}% applied</text>
         <rect x="10" y="315" width="66" height="20" rx="6" fill="#FDF0E4" stroke="#F2CBA8" />
         <text x="43" y="329" text-anchor="middle" class="lane-med num" fill="#A94910">
-          med {currentSummary.median.toFixed(1)}
+          mid {currentSummary.median.toFixed(1)}
         </text>
       </g>
 
@@ -526,7 +563,7 @@
                 text-anchor="middle"
                 class="bucket-tag num"
               >
-                B{band.bucketIndex + 1} ({band.count})
+                G{band.bucketIndex + 1} ({band.count})
               </text>
             {/if}
           {/if}
@@ -657,7 +694,7 @@
         {@const botSpot = ranked[ranked.length - 1]}
         {#each [
           { tag: '#1 Best', item: topSpot },
-          { tag: `#${midSpot.rank} Median`, item: midSpot },
+          { tag: `#${midSpot.rank} Middle`, item: midSpot },
           { tag: `#${botSpot.rank}`, item: botSpot },
         ] as anchor (anchor.item.id)}
           {@const curr = currentScores[anchor.item.index] ?? anchor.item.beforeScore}
@@ -747,7 +784,7 @@
         </text>
         {#if ranked.length > 120}
           <text x={padL + plotW} y="423" text-anchor="end" class="sample-note num">
-            Curves & metrics use all {ranked.length.toLocaleString()} spots; showing 120 evenly ranked ribbons
+            Stats use all {ranked.length.toLocaleString()} spots · showing 120 sample dots
           </text>
         {/if}
       </g>
@@ -803,6 +840,20 @@
     font-weight: 600;
     color: var(--ink);
     padding: 2px 0;
+  }
+
+  .seed-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 6px;
+    border-top: 1px dashed #e2ccb5;
+  }
+
+  .seed-hint {
+    color: var(--ink-muted);
   }
 
   .seed-field input {

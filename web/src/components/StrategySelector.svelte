@@ -1,6 +1,8 @@
 <script lang="ts">
   import { STRATEGY_LIST } from '../lib/foodInsights';
   import type { Strategy } from '../lib/types';
+  import InfoBanner from './InfoBanner.svelte';
+  import InfoButton from './InfoButton.svelte';
 
   type Props = {
     strategy: Strategy;
@@ -10,23 +12,30 @@
   };
 
   let { strategy, bucketCount, onSelectStrategy, onBucketCountChange }: Props = $props();
+
+  let openInfo = $state<Record<Strategy, boolean>>({
+    quantile_map: false,
+    zscore_sigmoid: false,
+    piecewise_bucket: false,
+  });
+  let showBucketInfo = $state(false);
 </script>
 
-<section class="strategy-section" aria-label="Normalization strategy selector">
+<section class="strategy-section" aria-label="Scoring style selector">
   <div class="strategy-grid">
     {#each STRATEGY_LIST as item (item.id)}
       {@const active = strategy === item.id}
-      <button
-        type="button"
-        class="strategy-card card"
-        class:active
-        aria-pressed={active}
-        onclick={() => onSelectStrategy(item.id)}
-      >
+      <div class="strategy-card card" class:active>
         <div class="card-top">
           <div class="title-group">
-            <span class="strategy-title">{item.title}</span>
-            <span class="strategy-code">{item.code}</span>
+            <button
+              type="button"
+              class="card-select-btn"
+              aria-pressed={active}
+              onclick={() => onSelectStrategy(item.id)}
+            >
+              <span class="strategy-title">{item.title}</span>
+            </button>
           </div>
 
           <svg
@@ -65,34 +74,84 @@
         <p class="strategy-summary">{item.summary}</p>
         <div class="card-foot">
           <span class="tag">{item.shortTag}</span>
-          {#if active}
-            <span class="active-indicator">Active</span>
-          {/if}
+          <div class="foot-actions">
+            {#if active}
+              <span class="active-indicator">Active</span>
+            {/if}
+            <InfoButton
+              open={openInfo[item.id]}
+              onToggle={() => (openInfo[item.id] = !openInfo[item.id])}
+              label={`Stats details for ${item.title}`}
+              controlsId={`strategy-info-${item.id}`}
+              compact
+            />
+          </div>
         </div>
-      </button>
+
+        {#if openInfo[item.id]}
+          <div class="card-info-wrap">
+            <InfoBanner
+              id={`strategy-info-${item.id}`}
+              title="Algorithm & stats"
+              onClose={() => (openInfo[item.id] = false)}
+            >
+              <p>
+                <code class="tech-term">{item.code}</code> · <strong>{item.techTitle}</strong>
+              </p>
+              <p>{item.techDetail}</p>
+            </InfoBanner>
+          </div>
+        {/if}
+      </div>
     {/each}
   </div>
 
   {#if strategy === 'piecewise_bucket'}
     <div class="bucket-bar card">
-      <div class="bucket-copy">
-        <span class="bucket-label">Raw Score Buckets</span>
-        <span class="bucket-hint">
-          Splits the 1–10 scale into {bucketCount} raw zones and stretches each by how many spots are inside.
-        </span>
+      <div class="bucket-row">
+        <div class="bucket-copy">
+          <div class="bucket-label-row">
+            <span class="bucket-label">Score Groups</span>
+            <InfoButton
+              open={showBucketInfo}
+              onToggle={() => (showBucketInfo = !showBucketInfo)}
+              label="How score groups work"
+              controlsId="bucket-info-banner"
+              compact
+            />
+          </div>
+          <span class="bucket-hint">
+            Splits 1–10 into {bucketCount} groups and gives busier groups more room.
+          </span>
+        </div>
+        <div class="bucket-control">
+          <input
+            type="range"
+            min="2"
+            max="12"
+            step="1"
+            value={bucketCount}
+            aria-label="Score groups count"
+            oninput={(e) => onBucketCountChange(Number((e.currentTarget as HTMLInputElement).value))}
+          />
+          <span class="bucket-pill num">{bucketCount} groups</span>
+        </div>
       </div>
-      <div class="bucket-control">
-        <input
-          type="range"
-          min="2"
-          max="12"
-          step="1"
-          value={bucketCount}
-          aria-label="Bucket count"
-          oninput={(e) => onBucketCountChange(Number((e.currentTarget as HTMLInputElement).value))}
-        />
-        <span class="bucket-pill num">{bucketCount} buckets</span>
-      </div>
+
+      {#if showBucketInfo}
+        <InfoBanner
+          id="bucket-info-banner"
+          title="Piecewise bucket math"
+          onClose={() => (showBucketInfo = false)}
+        >
+          <p>
+            <code class="tech-term">piecewise_bucket</code> partitions the raw 1–10 range into
+            <code class="tech-term">{bucketCount}</code> equal-width bins of
+            <code class="tech-term">{(9 / bucketCount).toFixed(2)} pts</code> each, then allocates
+            output width proportionally to each bin's density (<code class="tech-term">count / N</code>).
+          </p>
+        </InfoBanner>
+      {/if}
     </div>
   {/if}
 </section>
@@ -107,9 +166,11 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;
+    align-items: start;
   }
 
   .strategy-card {
+    position: relative;
     text-align: left;
     padding: 15px 16px 14px;
     display: grid;
@@ -143,17 +204,37 @@
     gap: 3px;
   }
 
+  .card-select-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    text-align: left;
+    color: inherit;
+  }
+
+  .card-select-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  .card-select-btn:focus-visible {
+    outline: none;
+  }
+
+  .card-select-btn:focus-visible::after {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
   .strategy-title {
     font-size: 1.02rem;
     font-weight: 700;
     color: var(--ink);
     letter-spacing: -0.01em;
-  }
-
-  .strategy-code {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    color: var(--ink-soft);
   }
 
   .shape-thumb {
@@ -198,6 +279,21 @@
     justify-content: space-between;
     align-items: center;
     margin-top: 2px;
+    gap: 8px;
+  }
+
+  .foot-actions {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-info-wrap {
+    position: relative;
+    z-index: 2;
+    margin-top: 2px;
   }
 
   .tag {
@@ -224,18 +320,29 @@
 
   .bucket-bar {
     padding: 12px 16px;
+    display: grid;
+    gap: 10px;
+    background: #fffcf8;
+    border-color: #ebd6c4;
+  }
+
+  .bucket-row {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-    background: #fffcf8;
-    border-color: #ebd6c4;
   }
 
   .bucket-copy {
     display: grid;
     gap: 2px;
+  }
+
+  .bucket-label-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
   }
 
   .bucket-label {

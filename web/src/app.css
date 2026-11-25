@@ -60,6 +60,30 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
+.tech-term {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1px 5px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.info-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 5px;
+}
+
+.info-list li {
+  line-height: 1.45;
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);

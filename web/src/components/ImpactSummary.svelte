@@ -7,6 +7,8 @@
     type RankedRestaurantBase,
   } from '../lib/foodInsights';
   import type { Strategy } from '../lib/types';
+  import InfoBanner from './InfoBanner.svelte';
+  import InfoButton from './InfoButton.svelte';
 
   type Props = {
     ranked: RankedRestaurantBase[];
@@ -29,6 +31,10 @@
     selectedId,
     onSelectStrategy,
   }: Props = $props();
+
+  let showTierInfo = $state(false);
+  let showSpreadInfo = $state(false);
+  let showCompareInfo = $state(false);
 
   const beforeSummary = $derived(computeDistributionSummary(beforeScores));
   const currentSummary = $derived(computeDistributionSummary(currentScores));
@@ -97,13 +103,38 @@
   <!-- 1. Food Tier Shift -->
   <section class="sub-card card">
     <div class="sub-head">
-      <h3>Where Your Restaurants Land</h3>
+      <div class="sub-head-row">
+        <h3>Where Your Restaurants Land</h3>
+        <InfoButton
+          open={showTierInfo}
+          onToggle={() => (showTierInfo = !showTierInfo)}
+          label="How Beli tier cutoffs work"
+          controlsId="tier-info-banner"
+          compact
+        />
+      </div>
       <span class="sub-tag">{beforeSummary.crowdedHeadline}</span>
     </div>
 
+    {#if showTierInfo}
+      <InfoBanner
+        id="tier-info-banner"
+        title="Tier thresholds"
+        onClose={() => (showTierInfo = false)}
+      >
+        <p>
+          Beli tiers use fixed score cutoffs:
+          <code class="tech-term">0.1–3.34</code> I Don't Like,
+          <code class="tech-term">3.35–6.64</code> It's Okay, and
+          <code class="tech-term">6.65–10.0</code> I Like. Spreading out a positively skewed list
+          moves some mid-ranked spots across thresholds without changing rank order.
+        </p>
+      </InfoBanner>
+    {/if}
+
     <div class="stacked-bars">
       <div class="bar-row">
-        <span class="bar-label">Before (Raw)</span>
+        <span class="bar-label">Before (Original)</span>
         <div class="stacked-track" role="img" aria-label="Before tier breakdown">
           {#each beforeSummary.tiers as row (row.tier.id)}
             {#if row.pct > 0}
@@ -154,19 +185,53 @@
     </div>
   </section>
 
-  <!-- 2. Separation & Order Guarantee -->
+  <!-- 2. Score Spread & Order -->
   <section class="sub-card card">
     <div class="sub-head">
-      <h3>Separation &amp; Order Guarantee</h3>
+      <div class="sub-head-row">
+        <h3>Score Spread &amp; Order</h3>
+        <InfoButton
+          open={showSpreadInfo}
+          onToggle={() => (showSpreadInfo = !showSpreadInfo)}
+          label="Spread and order statistics"
+          controlsId="spread-info-banner"
+          compact
+        />
+      </div>
       <span class="order-pill" class:ok={orderPreserved}>
-        {orderPreserved ? '✓ Rank order 100% intact' : 'Order check warning'}
+        {orderPreserved ? '✓ Every rank stays in order' : 'Order check warning'}
       </span>
     </div>
+
+    {#if showSpreadInfo}
+      <InfoBanner
+        id="spread-info-banner"
+        title="Spread & order statistics"
+        onClose={() => (showSpreadInfo = false)}
+      >
+        <ul class="info-list">
+          <li class="num">
+            <code class="tech-term">IQR (p75 − p25)</code>: Interquartile range of the middle 50%
+            ({beforeSummary.p25.toFixed(2)}–{beforeSummary.p75.toFixed(2)} before →
+            {currentSummary.p25.toFixed(2)}–{currentSummary.p75.toFixed(2)} now).
+          </li>
+          <li>
+            <code class="tech-term">Median adjacent gap</code>: Median score gap between
+            consecutive ranked spots (<code class="tech-term">sorted[k+1] − sorted[k]</code>).
+          </li>
+          <li class="num">
+            <code class="tech-term">Monotonicity check</code>: Verifies
+            <code class="tech-term">before[i] &lt; before[j] ⇒ after[i] ≤ after[j]</code> across
+            all {ranked.length.toLocaleString()} spots.
+          </li>
+        </ul>
+      </InfoBanner>
+    {/if}
 
     <div class="metric-blocks">
       <div class="metric-item">
         <div class="metric-top">
-          <span class="metric-name">Middle 50% Spread</span>
+          <span class="metric-name">Score Spread</span>
           <div class="metric-vals num">
             <span class="muted-val">{beforeSummary.iqr.toFixed(1)} pts</span>
             <span class="arrow">→</span>
@@ -194,7 +259,7 @@
 
       <div class="metric-item">
         <div class="metric-top">
-          <span class="metric-name">Typical Neighbor Gap</span>
+          <span class="metric-name">Space Between Spots</span>
           <div class="metric-vals num">
             <span class="muted-val">{formatGap(beforeSummary.medianAdjacentGap)} pts</span>
             <span class="arrow">→</span>
@@ -208,19 +273,54 @@
     </div>
   </section>
 
-  <!-- 3. Compare Heuristics on One Restaurant -->
+  <!-- 3. Compare Styles on One Spot -->
   {#if spotlightSpot}
     {@const rawTier = getTierForScore(spotlightSpot.beforeScore)}
     <section class="sub-card card">
       <div class="sub-head">
-        <h3>Compare Heuristics on One Spot</h3>
+        <div class="sub-head-row">
+          <h3>Compare Styles on One Spot</h3>
+          <InfoButton
+            open={showCompareInfo}
+            onToggle={() => (showCompareInfo = !showCompareInfo)}
+            label="Algorithm and percentile details"
+            controlsId="compare-info-banner"
+            compact
+          />
+        </div>
         <span class="spot-chip num">
-          #{spotlightSpot.rank} {spotlightSpot.displayName} · Raw
+          #{spotlightSpot.rank} {spotlightSpot.displayName} · Originally
           <strong style={`color: ${rawTier.textColor}`}>
             {spotlightSpot.beforeScore.toFixed(2)}
           </strong>
         </span>
       </div>
+
+      {#if showCompareInfo}
+        <InfoBanner
+          id="compare-info-banner"
+          title="Algorithm & percentile details"
+          onClose={() => (showCompareInfo = false)}
+        >
+          <ul class="info-list">
+            <li class="num">
+              Spotlight rank position:
+              <code class="tech-term">{(spotlightSpot.percentile * 100).toFixed(1)}th percentile</code>.
+            </li>
+            <li>
+              Styles: <code class="tech-term">quantile_map</code> (Even Spread),
+              <code class="tech-term">zscore_sigmoid</code> (Bell Balance),
+              <code class="tech-term">piecewise_bucket</code> (Bucket Stretch).
+            </li>
+            <li>
+              Quick Check tracks the 3 distribution anchors:
+              <code class="tech-term">max / #1</code>,
+              <code class="tech-term">median / p50</code>, and
+              <code class="tech-term">min / #N</code>.
+            </li>
+          </ul>
+        </InfoBanner>
+      {/if}
 
       <div class="compare-list">
         {#each STRATEGY_LIST as meta (meta.id)}
@@ -250,12 +350,12 @@
 
       {#if anchors}
         <p class="anchor-summary num">
-          <strong>3-Anchor Snapshot:</strong>
-          Top spot (#{anchors.best.rank}) moves
-          {anchors.best.raw.toFixed(1)} → {anchors.best.curr.toFixed(1)};
-          median (#{anchors.median.rank}) moves
-          {anchors.median.raw.toFixed(1)} → {anchors.median.curr.toFixed(1)};
-          lowest (#{anchors.lowest.rank}) moves
+          <strong>Quick Check:</strong>
+          Your #1 spot moves
+          {anchors.best.raw.toFixed(1)} → {anchors.best.curr.toFixed(1)},
+          your middle spot (#{anchors.median.rank}) moves
+          {anchors.median.raw.toFixed(1)} → {anchors.median.curr.toFixed(1)},
+          and your lowest (#{anchors.lowest.rank}) moves
           {anchors.lowest.raw.toFixed(1)} → {anchors.lowest.curr.toFixed(1)}.
         </p>
       {/if}
@@ -278,6 +378,13 @@
   .sub-head {
     display: grid;
     gap: 4px;
+  }
+
+  .sub-head-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
   }
 
   h3 {

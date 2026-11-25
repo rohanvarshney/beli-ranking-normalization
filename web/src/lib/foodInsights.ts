@@ -74,6 +74,8 @@ export type StrategyMeta = {
   shortTag: string;
   summary: string;
   detail: string;
+  techTitle: string;
+  techDetail: string;
 };
 
 export const STRATEGY_LIST: StrategyMeta[] = [
@@ -81,10 +83,13 @@ export const STRATEGY_LIST: StrategyMeta[] = [
     id: 'quantile_map',
     title: 'Even Spread',
     code: 'quantile_map',
-    shortTag: 'Uniform 1–10',
-    summary: 'Spaces every restaurant evenly from 1 to 10 by rank percentile.',
+    shortTag: 'Evenly spaced',
+    summary: 'Spaces every restaurant evenly from 1 to 10 from your lowest spot to your #1 favorite.',
     detail:
       'Every score band gets an equal share of spots. Great when you want maximum separation everywhere.',
+    techTitle: 'Quantile / Percentile Mapping',
+    techDetail:
+      'Maps each restaurant’s rank percentile linearly onto a uniform distribution across (1.0, 10.0], giving every score band an equal share of spots.',
   },
   {
     id: 'zscore_sigmoid',
@@ -94,15 +99,21 @@ export const STRATEGY_LIST: StrategyMeta[] = [
     summary: 'Centers typical restaurants near 5.5 and reserves 9+ for true standouts.',
     detail:
       'Preserves relative gaps near your average while compressing extreme outliers cleanly into a bell-like curve.',
+    techTitle: 'Z-Score + Logistic Sigmoid',
+    techDetail:
+      'Converts ratings into z-scores (standard deviations from the mean) and passes them through a logistic sigmoid curve mapped to (1.0, 10.0], preserving relative gaps near average while compressing extreme outliers.',
   },
   {
     id: 'piecewise_bucket',
     title: 'Bucket Stretch',
     code: 'piecewise_bucket',
-    shortTag: 'Density-weighted',
-    summary: 'Widens crowded rating bands proportionally while respecting bucket boundaries.',
+    shortTag: 'Stretches crowded zones',
+    summary: 'Gives crowded score ranges more room while keeping the overall shape of your list.',
     detail:
       'Divides 1–10 into fixed raw buckets and gives crowded buckets a larger slice of the output scale.',
+    techTitle: 'Piecewise Density-Weighted Buckets',
+    techDetail:
+      'Divides the raw 1–10 scale into equal-width bins and allocates output width proportionally to each bin’s share of restaurants, interpolating linearly within each bin.',
   },
 ];
 
@@ -296,14 +307,14 @@ export const buildDatasetOptions = (users: UserRatings[]): DatasetOption[] => {
     },
     {
       id: 'preset:harsh',
-      label: `Tough Critic (Clustered 4–6) · ${PRESET_COUNT} spots`,
+      label: `Tough Critic (Mostly 4–6) · ${PRESET_COUNT} spots`,
       shortLabel: 'Tough Critic',
       count: PRESET_COUNT,
       group: 'presets',
     },
     {
       id: 'preset:bimodal',
-      label: `Love-or-Skip Rater (Two Peaks) · ${PRESET_COUNT} spots`,
+      label: `Love-or-Skip Rater (Loves or Dislikes) · ${PRESET_COUNT} spots`,
       shortLabel: 'Love-or-Skip',
       count: PRESET_COUNT,
       group: 'presets',
