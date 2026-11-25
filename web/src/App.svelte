@@ -1,4 +1,5 @@
 <script lang="ts">
+  import signatureImg from './assets/freehand-signature-3.png';
   import FoodFlowChart from './components/FoodFlowChart.svelte';
   import ImpactSummary from './components/ImpactSummary.svelte';
   import RankedFoodList from './components/RankedFoodList.svelte';
@@ -146,7 +147,7 @@
         aria-label="Back to rohanvarshney.github.io"
       >
         <img
-          src="https://rohanvarshney.github.io/assets/freehand-signature-3.png"
+          src={signatureImg}
           alt="Rohan Varshney"
           class="brand-signature"
         />
