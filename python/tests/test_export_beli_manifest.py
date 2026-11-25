@@ -338,11 +338,7 @@ class FakeBeliServer:
 
         if path == "/api/business-labels/":
             return self._json(
-                {
-                    "results": [
-                        {"id": 55, "name": "MICHELIN", "display": "Michelin Bib"}
-                    ]
-                }
+                {"results": [{"id": 55, "name": "MICHELIN", "display": "Michelin Bib"}]}
             )
 
         if path == "/api/user-business-labels/":
