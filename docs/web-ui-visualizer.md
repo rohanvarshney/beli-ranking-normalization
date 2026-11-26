@@ -2,11 +2,14 @@
 
 ## Purpose
 
-The web UI is a Svelte-based interactive explorer that visualizes how **Beli Ranking Normalization** transforms crowded restaurant ratings on `(1.0, 10.0]` into a clearer, spread-out food rating distribution while preserving 100% of rank order.
+The web UI is a Svelte-based **product pitch deck and interactive demo** for Beli's co-founders and general audiences, showing how **Beli Score Calibration** transforms crowded restaurant ratings on `(1.0, 10.0]` into a clearer, spread-out distribution while preserving 100% of head-to-head rank order.
 
 ## Where the logic lives
 
-- App orchestration: `web/src/App.svelte`
+- App orchestration & scroll chapter tracking: `web/src/App.svelte`
+- Sticky pitch navigation: `web/src/components/PitchNav.svelte`
+- Pitch cover & value pillars: `web/src/components/PitchHero.svelte`
+- Problem slide (crowded Been list & Friend/Rec bias): `web/src/components/ProblemSection.svelte`
 - Strategy engine: `web/src/lib/normalize.ts`
 - Deterministic mock data: `web/src/lib/mockData.ts`
 - Animation utilities: `web/src/lib/animation.ts`
@@ -14,18 +17,15 @@ The web UI is a Svelte-based interactive explorer that visualizes how **Beli Ran
 - Strategy cards & bucket controls: `web/src/components/StrategySelector.svelte`
 - Mirrored food rating flow chart: `web/src/components/FoodFlowChart.svelte`
 - Ranked restaurant list & spotlight: `web/src/components/RankedFoodList.svelte`
-- Tier shift, spacing & heuristic comparison: `web/src/components/ImpactSummary.svelte`
+- At-a-glance impact & style comparison: `web/src/components/ImpactSummary.svelte`
+- Product impact & ship-it readiness + technical appendix: `web/src/components/ImpactPitchSection.svelte`
 
 ## How the UI works
 
-1. The app generates deterministic mock restaurant ratings across 10 diners (`generateMockUsers(seed)`) and defaults to an individual diner list sized for clear visual inspection (`getDefaultDatasetId`).
-2. Users can switch between any of the 10 individual diners, **All 10 Diners** combined, or deterministic rating-style presets (**Tough Critic** clustered around `4–6` and **Love-or-Skip Rater** with two peaks).
-3. It computes:
-   - `beforeScores` (raw ratings)
-   - `afterByStrategy` (normalized scores across `quantile_map`, `zscore_sigmoid`, and `piecewise_bucket`)
-4. Using the morph scrubber (`0%` to `100%`) or Play/Replay controls (`0.5×`, `1×`, `2×`), it interpolates live score values:
-   - `currentScores = interpolateScores(beforeScores, afterScores, progress)`
-5. All panels read from the same `ranked` and `currentScores` state so hovering or pinning a restaurant highlights it simultaneously across the flow chart, ranked list, and heuristic comparison card.
+1. The page flows through a 6-part narrative pitch: **Hero Cover**, **01 · The Problem**, **02 · The Proposal**, **03 · Live Demo**, **04 · Product Impact**, and **05 · Ready to Ship**.
+2. It generates deterministic mock restaurant ratings across 10 diners (`generateMockUsers(seed)`) and opens the Live Demo on **Classic Beli Crowd (7–9)** (`diner:6`).
+3. Users can jump straight into the demo from the Problem cards, pick quick story presets (`Classic Beli (7–9)`, `Tight 8.0–8.6`, `Generous Lover`, `Tough Critic`) or any of the 18 list presets, and morph live (`0%` to `100%`) across `quantile_map`, `zscore_sigmoid`, and `piecewise_bucket`.
+4. All demo panels read from the same `ranked` and `currentScores` state so hovering or pinning a restaurant highlights it simultaneously across the flow chart, ranked list, and comparison card.
 
 ## Visual panels
 

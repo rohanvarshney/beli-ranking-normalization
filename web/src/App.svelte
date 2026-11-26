@@ -1,9 +1,10 @@
 <script lang="ts">
-  import signatureImg from './assets/freehand-signature-3.png';
   import FoodFlowChart from './components/FoodFlowChart.svelte';
+  import ImpactPitchSection from './components/ImpactPitchSection.svelte';
   import ImpactSummary from './components/ImpactSummary.svelte';
-  import InfoBanner from './components/InfoBanner.svelte';
-  import InfoButton from './components/InfoButton.svelte';
+  import PitchHero from './components/PitchHero.svelte';
+  import PitchNav, { type PitchChapterId } from './components/PitchNav.svelte';
+  import ProblemSection from './components/ProblemSection.svelte';
   import RankedFoodList from './components/RankedFoodList.svelte';
   import StrategySelector from './components/StrategySelector.svelte';
   import { createProgressStepper } from './lib/animation';
@@ -18,11 +19,15 @@
   import { interpolateScores, normalizeScores } from './lib/normalize';
   import type { Strategy } from './lib/types';
 
+  const initialUsers = generateMockUsers(1337);
+  const initialDatasetId: DatasetId =
+    initialUsers.length > 6 ? 'diner:6' : getDefaultDatasetId(initialUsers);
+
   let seed = $state(1337);
   const users = $derived(generateMockUsers(seed));
   const datasetOptions = $derived(buildDatasetOptions(users));
 
-  let datasetId = $state<DatasetId>(getDefaultDatasetId(generateMockUsers(1337)));
+  let datasetId = $state<DatasetId>(initialDatasetId);
   let strategy = $state<Strategy>('quantile_map');
   let bucketCount = $state(4);
   let speedMs = $state(4000);
@@ -30,7 +35,7 @@
   let playing = $state(false);
   let hoveredId = $state<string | null>(null);
   let selectedId = $state<string | null>(null);
-  let showHeaderInfo = $state(false);
+  let activeSection = $state<PitchChapterId>('problem');
 
   const items = $derived(getDatasetItems(users, datasetId, seed));
   const beforeScores = $derived(items.map((x) => x.score));
@@ -51,6 +56,31 @@
     return () => {
       stepper?.stop();
     };
+  });
+
+  $effect(() => {
+    const ids: PitchChapterId[] = ['problem', 'proposal', 'demo', 'impact', 'ship'];
+    const elements = ids
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+    if (elements.length === 0 || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const id = entry.target.id as PitchChapterId;
+            if (ids.includes(id)) {
+              activeSection = id;
+            }
+          }
+        }
+      },
+      { rootMargin: '-25% 0px -60% 0px', threshold: 0.01 },
+    );
+
+    for (const el of elements) observer.observe(el);
+    return () => observer.disconnect();
   });
 
   const stopPlayback = () => {
@@ -119,6 +149,16 @@
     progress = 1;
   };
 
+  const handleTryInDemo = (nextId: DatasetId) => {
+    stopPlayback();
+    hoveredId = null;
+    selectedId = null;
+    datasetId = nextId;
+    progress = 0;
+    startPlaybackFrom(0, speedMs);
+    document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   const applyNewSeed = (nextSeed: number) => {
     stopPlayback();
     hoveredId = null;
@@ -140,208 +180,167 @@
   };
 </script>
 
+<PitchNav {activeSection} />
+
 <main>
-  <header class="page-header">
-    <div class="header-topbar">
-      <a
-        class="brand-home-link"
-        href="https://rohanvarshney.github.io"
-        title="Rohan Varshney — Personal Website"
-        aria-label="Back to rohanvarshney.github.io"
-      >
-        <img
-          src={signatureImg}
-          alt="Rohan Varshney"
-          class="brand-signature"
-        />
-      </a>
+  <PitchHero />
 
-      <a
-        class="github-link"
-        href="https://github.com/rohanvarshney/beli-ranking-normalization"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        GitHub ↗
-      </a>
-    </div>
+  <ProblemSection {users} {seed} onTryInDemo={handleTryInDemo} />
 
-    <div class="header-copy">
-      <div class="eyebrow-row">
-        <span class="eyebrow">Beli Score Explorer</span>
-        <InfoButton
-          open={showHeaderInfo}
-          onToggle={() => (showHeaderInfo = !showHeaderInfo)}
-          label="About ranking normalization"
-          controlsId="header-info-banner"
-          compact
-        />
-      </div>
-      <h1>How Score Rescaling Reshapes Your Beli List</h1>
-      <p class="lead">
-        Most diners pack nearly every restaurant between 7.0 and 9.0. Pick a scoring style below to
-        stretch crowded ratings across the 1–10 scale—without changing a single spot's rank.
+  <section id="proposal" class="pitch-section">
+    <div class="section-head">
+      <span class="section-eyebrow">02 · The Proposal</span>
+      <h2 class="section-title">Stretch the scores, never the ranks</h2>
+      <p class="section-lead">
+        Keep Beli's head-to-head ranking UX 100% unchanged. Add a lightweight calibration step that
+        spreads a user's scores across the full 1–10 scale—and pick the curve style that best fits
+        Beli's product voice.
       </p>
-      {#if showHeaderInfo}
-        <InfoBanner
-          id="header-info-banner"
-          title="Technical note · Ranking normalization"
-          onClose={() => (showHeaderInfo = false)}
-        >
-          <p>
-            Under the hood, each style performs
-            <code class="tech-term">monotonic ranking normalization</code> onto
-            <code class="tech-term">(1.0, 10.0]</code>, guaranteeing
-            <code class="tech-term">raw_a &lt; raw_b ⇒ new_a ≤ new_b</code> across all pairs.
-          </p>
-        </InfoBanner>
-      {/if}
     </div>
-  </header>
 
-  <StrategySelector
-    {strategy}
-    {bucketCount}
-    onSelectStrategy={handleSelectStrategy}
-    onBucketCountChange={handleBucketCountChange}
-  />
+    <div class="steps-strip" aria-label="How score calibration works in three steps">
+      <div class="step-card card">
+        <span class="step-num num">1</span>
+        <div>
+          <strong>Rank as usual</strong>
+          <p>Diners still tap <em>I liked it!</em>, <em>It was fine</em>, or <em>I didn't like it</em> and compare spots head-to-head.</p>
+        </div>
+      </div>
 
-  <FoodFlowChart
-    {ranked}
-    {beforeScores}
-    {currentScores}
-    {afterScores}
-    {strategy}
-    {bucketCount}
-    {progress}
-    {playing}
-    {speedMs}
-    {datasetId}
-    {datasetOptions}
-    {seed}
-    {hoveredId}
-    {selectedId}
-    onPlayPause={handlePlayPause}
-    onScrub={handleScrub}
-    onSpeedChange={handleSpeedChange}
-    onDatasetChange={handleDatasetChange}
-    onSeedChange={applyNewSeed}
-    onShuffleSeed={handleShuffleSeed}
-    onHover={(id) => (hoveredId = id)}
-    onSelect={(id) => (selectedId = id)}
-  />
+      <div class="step-card card">
+        <span class="step-num num">2</span>
+        <div>
+          <strong>Calibrate the spread</strong>
+          <p>A deterministic layer stretches crowded clusters across 1–10 while locking every single rank in place.</p>
+        </div>
+      </div>
 
-  <div class="details-grid">
-    <RankedFoodList
-      {ranked}
-      {currentScores}
+      <div class="step-card card">
+        <span class="step-num num">3</span>
+        <div>
+          <strong>Unlock clearer scores</strong>
+          <p>Personal lists, Friend Scores, and Rec Scores all speak the same 1–10 language.</p>
+        </div>
+      </div>
+    </div>
+
+    <StrategySelector
       {strategy}
+      {bucketCount}
+      onSelectStrategy={handleSelectStrategy}
+      onBucketCountChange={handleBucketCountChange}
+    />
+  </section>
+
+  <section id="demo" class="pitch-section">
+    <div class="section-head">
+      <span class="section-eyebrow">03 · Live Demo</span>
+      <h2 class="section-title">Watch a crowded Beli list open up</h2>
+      <p class="section-lead">
+        Pick a diner preset below, hit <strong>Animate</strong> (or drag the slider), and click any
+        restaurant dot or row to follow how its score moves without changing its rank.
+      </p>
+    </div>
+
+    <FoodFlowChart
+      {ranked}
+      {beforeScores}
+      {currentScores}
+      {afterScores}
+      {strategy}
+      {bucketCount}
+      {progress}
+      {playing}
+      {speedMs}
+      {datasetId}
+      {datasetOptions}
+      {seed}
       {hoveredId}
       {selectedId}
+      onPlayPause={handlePlayPause}
+      onScrub={handleScrub}
+      onSpeedChange={handleSpeedChange}
+      onDatasetChange={handleDatasetChange}
+      onSeedChange={applyNewSeed}
+      onShuffleSeed={handleShuffleSeed}
       onHover={(id) => (hoveredId = id)}
       onSelect={(id) => (selectedId = id)}
     />
 
-    <ImpactSummary
-      {ranked}
-      {beforeScores}
-      {currentScores}
-      {strategy}
-      {progress}
-      {hoveredId}
-      {selectedId}
-      onSelectStrategy={handleSelectStrategy}
-    />
-  </div>
+    <div class="details-grid">
+      <RankedFoodList
+        {ranked}
+        {currentScores}
+        {strategy}
+        {hoveredId}
+        {selectedId}
+        onHover={(id) => (hoveredId = id)}
+        onSelect={(id) => (selectedId = id)}
+      />
+
+      <ImpactSummary
+        {ranked}
+        {beforeScores}
+        {currentScores}
+        {strategy}
+        {progress}
+        {hoveredId}
+        {selectedId}
+        onSelectStrategy={handleSelectStrategy}
+      />
+    </div>
+  </section>
+
+  <ImpactPitchSection />
 </main>
 
 <style>
-  .page-header {
+  .steps-strip {
     display: grid;
-    gap: 10px;
-    padding: 2px 2px 2px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
   }
 
-  .header-topbar {
+  .step-card {
+    padding: 15px 16px;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
+    background: var(--surface);
   }
 
-  .brand-home-link {
+  .step-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.82rem;
+    font-weight: 800;
     display: inline-flex;
     align-items: center;
-    text-decoration: none;
-    border-radius: 8px;
-    transition: opacity 0.15s ease;
+    justify-content: center;
+    flex-shrink: 0;
   }
 
-  .brand-home-link:hover {
-    opacity: 0.72;
-  }
-
-  .brand-signature {
+  .step-card strong {
     display: block;
-    height: 36px;
-    width: auto;
-    object-fit: contain;
-    mix-blend-mode: multiply;
-  }
-
-  .header-copy {
-    max-width: 920px;
-    display: grid;
-    gap: 6px;
-  }
-
-  .eyebrow-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .eyebrow {
-    font-size: 0.74rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--accent);
-  }
-
-  h1 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(1.45rem, 2.5vw, 2.05rem);
-    line-height: 1.16;
-    letter-spacing: -0.02em;
+    font-size: 0.92rem;
     color: var(--ink);
+    margin-bottom: 3px;
   }
 
-  .lead {
+  .step-card p {
     margin: 0;
-    font-size: 0.96rem;
-    line-height: 1.5;
+    font-size: 0.82rem;
+    line-height: 1.45;
     color: var(--ink-muted);
   }
 
-  .github-link {
-    text-decoration: none;
-    font-size: 0.84rem;
-    font-weight: 600;
-    color: var(--ink);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 7px 14px;
-    box-shadow: 0 1px 2px rgba(31, 27, 22, 0.04);
-    transition: background-color 0.12s ease, border-color 0.12s ease;
-    white-space: nowrap;
-  }
-
-  .github-link:hover {
-    background: var(--surface-subtle);
-    border-color: var(--border-strong);
+  @media (max-width: 820px) {
+    .steps-strip {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
+    }
   }
 </style>

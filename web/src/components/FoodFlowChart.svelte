@@ -14,8 +14,6 @@
     type RankedRestaurantBase,
   } from '../lib/foodInsights';
   import type { Strategy } from '../lib/types';
-  import InfoBanner from './InfoBanner.svelte';
-  import InfoButton from './InfoButton.svelte';
 
   type Props = {
     ranked: RankedRestaurantBase[];
@@ -67,7 +65,14 @@
     onSelect,
   }: Props = $props();
 
-  let showChartInfo = $state(false);
+  let showDemoOptions = $state(false);
+
+  const STORY_PRESETS: { id: DatasetId; label: string }[] = [
+    { id: 'diner:6', label: 'Classic Beli (7–9)' },
+    { id: 'diner:0', label: 'Tight 8.0–8.6' },
+    { id: 'preset:lover', label: 'Generous Lover' },
+    { id: 'preset:harsh', label: 'Tough Critic' },
+  ];
 
   const width = 1040;
   const height = 432;
@@ -225,7 +230,7 @@
     const x1 = scoreToX(beforeSummary.p25);
     const x2 = scoreToX(beforeSummary.p75);
     const span = beforeSummary.iqr;
-    const label = `Middle 50%: ${beforeSummary.p25.toFixed(1)}–${beforeSummary.p75.toFixed(1)} (${span.toFixed(1)} ${Math.abs(span - 1) < 0.05 ? 'pt' : 'pts'})`;
+    const label = `Half of spots: ${beforeSummary.p25.toFixed(1)}–${beforeSummary.p75.toFixed(1)} (${span.toFixed(1)} ${Math.abs(span - 1) < 0.05 ? 'pt' : 'pts'})`;
     const pillW = Math.max(176, label.length * 6.4 + 20);
     const cx = clampCenter((x1 + x2) / 2, pillW / 2 + 4);
     return { x1, x2, label, pillW, cx };
@@ -235,7 +240,7 @@
     const x1 = scoreToX(currentSummary.p25);
     const x2 = scoreToX(currentSummary.p75);
     const span = currentSummary.iqr;
-    const label = `Middle 50%: ${currentSummary.p25.toFixed(1)}–${currentSummary.p75.toFixed(1)} (${span.toFixed(1)} ${Math.abs(span - 1) < 0.05 ? 'pt' : 'pts'})`;
+    const label = `Half of spots: ${currentSummary.p25.toFixed(1)}–${currentSummary.p75.toFixed(1)} (${span.toFixed(1)} ${Math.abs(span - 1) < 0.05 ? 'pt' : 'pts'})`;
     const pillW = Math.max(176, label.length * 6.4 + 20);
     const cx = clampCenter((x1 + x2) / 2, pillW / 2 + 4);
     return { x1, x2, label, pillW, cx };
@@ -254,8 +259,21 @@
 <section class="hero card" aria-label="Beli ranking normalization flow chart">
   <div class="toolbar">
     <div class="toolbar-group">
+      <div class="preset-pills" role="group" aria-label="Quick story presets">
+        {#each STORY_PRESETS as preset (preset.id)}
+          <button
+            type="button"
+            class="preset-pill"
+            class:active={datasetId === preset.id}
+            onclick={() => onDatasetChange(preset.id)}
+          >
+            {preset.label}
+          </button>
+        {/each}
+      </div>
+
       <label class="inline-field">
-        <span class="field-label">List</span>
+        <span class="field-label">More lists</span>
         <select
           value={datasetId}
           aria-label="Select diner or rating style preset"
@@ -273,46 +291,18 @@
           </optgroup>
         </select>
       </label>
-
-      <button type="button" class="btn-subtle" onclick={onShuffleSeed} title="Generate a new sample list">
-        ↻ New Sample
-      </button>
-
-      <InfoButton
-        open={showChartInfo}
-        onToggle={() => (showChartInfo = !showChartInfo)}
-        label="Chart statistics and sample seed"
-        controlsId="chart-info-banner"
-      />
     </div>
 
     <div class="toolbar-group">
-      <div class="speed-pills" role="group" aria-label="Animation speed">
-        <button
-          type="button"
-          class="speed-btn"
-          class:active={formatSpeedActive(7200)}
-          onclick={() => onSpeedChange(7200)}
-        >
-          0.5×
-        </button>
-        <button
-          type="button"
-          class="speed-btn"
-          class:active={formatSpeedActive(4000)}
-          onclick={() => onSpeedChange(4000)}
-        >
-          1×
-        </button>
-        <button
-          type="button"
-          class="speed-btn"
-          class:active={formatSpeedActive(1800)}
-          onclick={() => onSpeedChange(1800)}
-        >
-          2×
-        </button>
-      </div>
+      <button
+        type="button"
+        class="btn-subtle"
+        aria-expanded={showDemoOptions}
+        aria-controls="demo-options-tray"
+        onclick={() => (showDemoOptions = !showDemoOptions)}
+      >
+        {showDemoOptions ? 'Hide Options' : 'Options'}
+      </button>
 
       <button type="button" class="btn-primary" onclick={onPlayPause}>
         {#if playing}
@@ -333,7 +323,7 @@
       class:active={progress <= 0.01}
       onclick={() => onScrub(0)}
     >
-      Original (0%)
+      Today's Beli (0%)
     </button>
 
     <input
@@ -342,7 +332,7 @@
       max="1"
       step="0.005"
       value={progress}
-      aria-label="Morph progress between original and adjusted scores"
+      aria-label="Morph progress between today's scores and calibrated scores"
       oninput={(e) => onScrub(Number((e.currentTarget as HTMLInputElement).value))}
     />
 
@@ -354,49 +344,67 @@
       class:active={progress >= 0.99}
       onclick={() => onScrub(1)}
     >
-      Adjusted (100%)
+      Calibrated (100%)
     </button>
   </div>
 
-  {#if showChartInfo}
-    <InfoBanner
-      id="chart-info-banner"
-      title="Chart stats & sample seed"
-      onClose={() => (showChartInfo = false)}
-    >
-      <ul class="info-list">
-        <li>
-          <code class="tech-term">KDE</code> Smooth curves: Kernel Density Estimate showing where scores cluster.
-        </li>
-        <li class="num">
-          <code class="tech-term">IQR (p25–p75)</code> Middle 50%: Interquartile range ({beforeSummary.p25.toFixed(2)}–{beforeSummary.p75.toFixed(2)} before → {currentSummary.p25.toFixed(2)}–{currentSummary.p75.toFixed(2)} now).
-        </li>
-        <li class="num">
-          <code class="tech-term">Median (p50)</code> mid pill: 50th percentile score ({beforeSummary.median.toFixed(2)} → {currentSummary.median.toFixed(2)}).
-        </li>
-        <li class="num">
-          <code class="tech-term">Monotonicity</code> Flow lines: Non-crossing Bezier curves confirming rank order is preserved across all {ranked.length.toLocaleString()} spots.
-        </li>
-      </ul>
+  {#if showDemoOptions}
+    <div id="demo-options-tray" class="options-tray">
+      <div class="options-row">
+        <div class="options-left">
+          <span class="tray-label">Speed</span>
+          <div class="speed-pills" role="group" aria-label="Animation speed">
+            <button
+              type="button"
+              class="speed-btn"
+              class:active={formatSpeedActive(7200)}
+              onclick={() => onSpeedChange(7200)}
+            >
+              0.5×
+            </button>
+            <button
+              type="button"
+              class="speed-btn"
+              class:active={formatSpeedActive(4000)}
+              onclick={() => onSpeedChange(4000)}
+            >
+              1×
+            </button>
+            <button
+              type="button"
+              class="speed-btn"
+              class:active={formatSpeedActive(1800)}
+              onclick={() => onSpeedChange(1800)}
+            >
+              2×
+            </button>
+          </div>
 
-      <div class="seed-row">
-        <span class="seed-hint">Sample lists are generated deterministically from a PRNG seed.</span>
-        <label class="inline-field seed-field">
-          <span class="field-label">Seed</span>
-          <input
-            type="number"
-            min="1"
-            step="1"
-            value={seed}
-            aria-label="Dataset seed"
-            onchange={(e) => {
-              const parsed = Number.parseInt((e.currentTarget as HTMLInputElement).value, 10);
-              if (Number.isFinite(parsed) && parsed >= 1) onSeedChange(parsed);
-            }}
-          />
-        </label>
+          <button type="button" class="btn-subtle" onclick={onShuffleSeed} title="Generate a new sample list">
+            ↻ New Sample
+          </button>
+
+          <label class="inline-field seed-field">
+            <span class="field-label">Seed</span>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={seed}
+              aria-label="Dataset seed"
+              onchange={(e) => {
+                const parsed = Number.parseInt((e.currentTarget as HTMLInputElement).value, 10);
+                if (Number.isFinite(parsed) && parsed >= 1) onSeedChange(parsed);
+              }}
+            />
+          </label>
+        </div>
+
+        <p class="tray-legend">
+          <strong>How to read:</strong> Smooth curves show where restaurants cluster; connecting ribbons prove every spot keeps its exact rank from #1 to #{ranked.length.toLocaleString()}.
+        </p>
       </div>
-    </InfoBanner>
+    </div>
   {/if}
 
   <div class="mobile-scroll-hint">Swipe chart horizontally to explore details →</div>
@@ -512,8 +520,8 @@
 
       <!-- Left margin lane annotations -->
       <g class="lane-labels">
-        <text x="10" y="96" class="lane-eyebrow">BEFORE</text>
-        <text x="10" y="112" class="lane-sub">Original</text>
+        <text x="10" y="96" class="lane-eyebrow">TODAY</text>
+        <text x="10" y="112" class="lane-sub">Raw Beli</text>
         <rect x="10" y="121" width="66" height="20" rx="6" fill="#F4EFE6" stroke="#E5DDD0" />
         <text x="43" y="135" text-anchor="middle" class="lane-med num">
           mid {beforeSummary.median.toFixed(1)}
@@ -524,9 +532,9 @@
         <text x="45" y="217" text-anchor="middle" class="order-sub">100% locked</text>
 
         <text x="10" y="290" class="lane-eyebrow active-eyebrow">
-          {progress <= 0.01 ? 'BEFORE' : progress >= 0.995 ? 'AFTER' : 'MOVING'}
+          {progress <= 0.01 ? 'TODAY' : progress >= 0.995 ? 'PROPOSED' : 'MOVING'}
         </text>
-        <text x="10" y="306" class="lane-sub num">{Math.round(progress * 100)}% applied</text>
+        <text x="10" y="306" class="lane-sub num">Calibrated</text>
         <rect x="10" y="315" width="66" height="20" rx="6" fill="#FDF0E4" stroke="#F2CBA8" />
         <text x="43" y="329" text-anchor="middle" class="lane-med num" fill="#A94910">
           mid {currentSummary.median.toFixed(1)}
@@ -774,7 +782,7 @@
           </text>
         {/each}
         <text x={padL + plotW / 2} y="423" text-anchor="middle" class="ruler-caption">
-          Food Rating Scale (1.0 – 10.0)
+          Beli Rating Scale (1.0 – 10.0)
         </text>
         {#if ranked.length > 120}
           <text x={padL + plotW} y="423" text-anchor="end" class="sample-note num">
@@ -808,6 +816,77 @@
     gap: 8px;
   }
 
+  .preset-pills {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .preset-pill {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink-muted);
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  }
+
+  .preset-pill:hover {
+    background: var(--surface-subtle);
+    color: var(--ink);
+  }
+
+  .preset-pill.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .options-tray {
+    background: var(--surface-subtle);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+
+  .options-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .options-left {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tray-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-muted);
+  }
+
+  .tray-legend {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+    line-height: 1.4;
+  }
+
+  .tray-legend strong {
+    color: var(--ink);
+  }
+
   .inline-field {
     display: inline-flex;
     align-items: center;
@@ -834,20 +913,6 @@
     font-weight: 600;
     color: var(--ink);
     padding: 2px 0;
-  }
-
-  .seed-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding-top: 6px;
-    border-top: 1px dashed #e2ccb5;
-  }
-
-  .seed-hint {
-    color: var(--ink-muted);
   }
 
   .seed-field input {

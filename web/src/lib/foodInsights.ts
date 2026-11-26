@@ -72,6 +72,7 @@ export type StrategyMeta = {
   title: string;
   code: Strategy;
   shortTag: string;
+  bestFor: string;
   summary: string;
   detail: string;
   techTitle: string;
@@ -84,7 +85,9 @@ export const STRATEGY_LIST: StrategyMeta[] = [
     title: 'Even Spread',
     code: 'quantile_map',
     shortTag: 'Evenly spaced',
-    summary: 'Spaces every restaurant evenly from 1 to 10 from your lowest spot to your #1 favorite.',
+    bestFor: 'Best for maximum clarity',
+    summary:
+      'Spaces every spot evenly from 1 to 10 so your #1 favorite and #40 spot never feel squished together.',
     detail:
       'Every score band gets an equal share of spots. Great when you want maximum separation everywhere.',
     techTitle: 'Quantile / Percentile Mapping',
@@ -96,7 +99,8 @@ export const STRATEGY_LIST: StrategyMeta[] = [
     title: 'Bell Balance',
     code: 'zscore_sigmoid',
     shortTag: 'Centered at 5.5',
-    summary: 'Centers typical restaurants near 5.5 and reserves 9+ for true standouts.',
+    bestFor: 'Best for classic critics',
+    summary: 'Centers everyday meals near 5.5 and saves 9+ for true once-a-year standouts.',
     detail:
       'Preserves relative gaps near your average while compressing extreme outliers cleanly into a bell-like curve.',
     techTitle: 'Z-Score + Logistic Sigmoid',
@@ -108,7 +112,9 @@ export const STRATEGY_LIST: StrategyMeta[] = [
     title: 'Bucket Stretch',
     code: 'piecewise_bucket',
     shortTag: 'Stretches crowded zones',
-    summary: 'Gives crowded score ranges more room while keeping the overall shape of your list.',
+    bestFor: 'Best for gentle tweaks',
+    summary:
+      'Gives crowded score bands extra breathing room while keeping the familiar shape of your list.',
     detail:
       'Divides 1–10 into fixed raw buckets and gives crowded buckets a larger slice of the output scale.',
     techTitle: 'Piecewise Density-Weighted Buckets',

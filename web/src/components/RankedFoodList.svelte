@@ -1,8 +1,6 @@
 <script lang="ts">
   import { getTierForScore, type RankedRestaurantBase } from '../lib/foodInsights';
   import type { Strategy } from '../lib/types';
-  import InfoBanner from './InfoBanner.svelte';
-  import InfoButton from './InfoButton.svelte';
 
   type FilterTab = 'all' | 'top10' | 'middle' | 'bottom10' | 'shifts';
 
@@ -21,7 +19,6 @@
   let activeTab = $state<FilterTab>('all');
   let searchQuery = $state('');
   let visibleLimit = $state(80);
-  let showListInfo = $state(false);
 
   $effect(() => {
     // Reset pagination cap when filter or dataset changes
@@ -140,43 +137,13 @@
 <section class="list-card card" aria-label="Ranked food list">
   <div class="list-header">
     <div>
-      <div class="title-row">
-        <h2>Your Ranked Food List</h2>
-        <InfoButton
-          open={showListInfo}
-          onToggle={() => (showListInfo = !showListInfo)}
-          label="How list scores and spacing work"
-          controlsId="list-info-banner"
-          compact
-        />
-      </div>
+      <h2>Sample "Been" List — Same Order, Clearer Scores</h2>
       <p class="subtitle">
         Every spot keeps its exact rank from #1 down to #{ranked.length.toLocaleString()}.
       </p>
     </div>
     <span class="count-pill num">{filteredRows.length.toLocaleString()} spots</span>
   </div>
-
-  {#if showListInfo}
-    <InfoBanner
-      id="list-info-banner"
-      title="List & spacing details"
-      onClose={() => (showListInfo = false)}
-    >
-      <ul class="info-list">
-        <li>
-          Mini shift bar: hollow circle is the original score; colored dot is the adjusted score.
-        </li>
-        <li>
-          <code class="tech-term">Min adjacent gap</code> (Space to next spot):
-          <code class="tech-term">min(|sᵢ − sᵢ₋₁|, |sᵢ − sᵢ₊₁|)</code> — larger gaps reduce crowded near-ties.
-        </li>
-        <li>
-          <code class="tech-term">Rank preservation</code>: ties keep deterministic original ordering.
-        </li>
-      </ul>
-    </InfoBanner>
-  {/if}
 
   {#if spotlightContext}
     {@const sc = spotlightContext}
@@ -234,7 +201,7 @@
 
         {#if sc.closestRawGap !== null && sc.closestCurrGap !== null}
           <span class="neighbor-gap num">
-            Space to next spot:
+            Gap to neighbor:
             <strong>{formatGap(sc.closestRawGap)}</strong>
             →
             <strong>{formatGap(sc.closestCurrGap)} pts</strong>
@@ -357,12 +324,6 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 10px;
-  }
-
-  .title-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
   }
 
   h2 {

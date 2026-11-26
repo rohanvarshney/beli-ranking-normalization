@@ -1,8 +1,6 @@
 <script lang="ts">
   import { STRATEGY_LIST } from '../lib/foodInsights';
   import type { Strategy } from '../lib/types';
-  import InfoBanner from './InfoBanner.svelte';
-  import InfoButton from './InfoButton.svelte';
 
   type Props = {
     strategy: Strategy;
@@ -12,13 +10,6 @@
   };
 
   let { strategy, bucketCount, onSelectStrategy, onBucketCountChange }: Props = $props();
-
-  let openInfo = $state<Record<Strategy, boolean>>({
-    quantile_map: false,
-    zscore_sigmoid: false,
-    piecewise_bucket: false,
-  });
-  let showBucketInfo = $state(false);
 </script>
 
 <section class="strategy-section" aria-label="Scoring style selector">
@@ -73,35 +64,11 @@
 
         <p class="strategy-summary">{item.summary}</p>
         <div class="card-foot">
-          <span class="tag">{item.shortTag}</span>
-          <div class="foot-actions">
-            {#if active}
-              <span class="active-indicator">Active</span>
-            {/if}
-            <InfoButton
-              open={openInfo[item.id]}
-              onToggle={() => (openInfo[item.id] = !openInfo[item.id])}
-              label={`Stats details for ${item.title}`}
-              controlsId={`strategy-info-${item.id}`}
-              compact
-            />
-          </div>
+          <span class="tag">{item.bestFor}</span>
+          {#if active}
+            <span class="active-indicator">Active</span>
+          {/if}
         </div>
-
-        {#if openInfo[item.id]}
-          <div class="card-info-wrap">
-            <InfoBanner
-              id={`strategy-info-${item.id}`}
-              title="Algorithm & stats"
-              onClose={() => (openInfo[item.id] = false)}
-            >
-              <p>
-                <code class="tech-term">{item.code}</code> · <strong>{item.techTitle}</strong>
-              </p>
-              <p>{item.techDetail}</p>
-            </InfoBanner>
-          </div>
-        {/if}
       </div>
     {/each}
   </div>
@@ -110,18 +77,9 @@
     <div class="bucket-bar card">
       <div class="bucket-row">
         <div class="bucket-copy">
-          <div class="bucket-label-row">
-            <span class="bucket-label">Score Groups</span>
-            <InfoButton
-              open={showBucketInfo}
-              onToggle={() => (showBucketInfo = !showBucketInfo)}
-              label="How score groups work"
-              controlsId="bucket-info-banner"
-              compact
-            />
-          </div>
+          <span class="bucket-label">Score Zones</span>
           <span class="bucket-hint">
-            Splits 1–10 into {bucketCount} groups and gives busier groups more room.
+            Splits 1–10 into {bucketCount} zones and gives busier zones more room.
           </span>
         </div>
         <div class="bucket-control">
@@ -131,27 +89,12 @@
             max="12"
             step="1"
             value={bucketCount}
-            aria-label="Score groups count"
+            aria-label="Score zones count"
             oninput={(e) => onBucketCountChange(Number((e.currentTarget as HTMLInputElement).value))}
           />
-          <span class="bucket-pill num">{bucketCount} groups</span>
+          <span class="bucket-pill num">{bucketCount} zones</span>
         </div>
       </div>
-
-      {#if showBucketInfo}
-        <InfoBanner
-          id="bucket-info-banner"
-          title="Piecewise bucket math"
-          onClose={() => (showBucketInfo = false)}
-        >
-          <p>
-            <code class="tech-term">piecewise_bucket</code> partitions the raw 1–10 range into
-            <code class="tech-term">{bucketCount}</code> equal-width bins of
-            <code class="tech-term">{(9 / bucketCount).toFixed(2)} pts</code> each, then allocates
-            output width proportionally to each bin's density (<code class="tech-term">count / N</code>).
-          </p>
-        </InfoBanner>
-      {/if}
     </div>
   {/if}
 </section>
@@ -282,20 +225,6 @@
     gap: 8px;
   }
 
-  .foot-actions {
-    position: relative;
-    z-index: 2;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .card-info-wrap {
-    position: relative;
-    z-index: 2;
-    margin-top: 2px;
-  }
-
   .tag {
     font-size: 0.74rem;
     font-weight: 600;
@@ -337,12 +266,6 @@
   .bucket-copy {
     display: grid;
     gap: 2px;
-  }
-
-  .bucket-label-row {
-    display: flex;
-    align-items: center;
-    gap: 7px;
   }
 
   .bucket-label {
