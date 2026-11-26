@@ -185,14 +185,23 @@ export const formatDatasetNames = (
   });
 };
 
-export type DatasetId = `diner:${number}` | 'all' | 'preset:harsh' | 'preset:bimodal';
+export type DatasetId =
+  | `diner:${number}`
+  | 'all'
+  | 'all:negative'
+  | 'all:neutral'
+  | 'all:positive'
+  | 'preset:lover'
+  | 'preset:hater'
+  | 'preset:harsh'
+  | 'preset:bimodal';
 
 export type DatasetOption = {
   id: DatasetId;
   label: string;
   shortLabel: string;
   count: number;
-  group: 'diners' | 'aggregate' | 'presets';
+  group: 'diners' | 'aggregate';
 };
 
 const PRESET_COUNT = 65;
@@ -257,8 +266,17 @@ const clampScoreRange = (value: number, maxCap = MAX_SCORE): number => {
   return value;
 };
 
-const buildPresetRatings = (kind: 'harsh' | 'bimodal', seed: number): RestaurantScore[] => {
-  const salt = kind === 'harsh' ? 0x9e3779b9 : 0x85ebca6b;
+type PresetKind = 'lover' | 'hater' | 'harsh' | 'bimodal';
+
+const PRESET_SALTS: Record<PresetKind, number> = {
+  lover: 0xc2b2ae35,
+  hater: 0x27d4eb2f,
+  harsh: 0x9e3779b9,
+  bimodal: 0x85ebca6b,
+};
+
+const buildPresetRatings = (kind: PresetKind, seed: number): RestaurantScore[] => {
+  const salt = PRESET_SALTS[kind];
   const rng = new LocalSeededRng((seed ^ salt) >>> 0);
   const out: RestaurantScore[] = [];
 
@@ -268,7 +286,11 @@ const buildPresetRatings = (kind: 'harsh' | 'bimodal', seed: number): Restaurant
     const name = `${adj} ${noun} #${String(i + 1).padStart(3, '0')}`;
 
     let score: number;
-    if (kind === 'harsh') {
+    if (kind === 'lover') {
+      score = clampScoreRange(Math.max(7.2, rng.normal(8.85, 0.48)), MAX_SCORE);
+    } else if (kind === 'hater') {
+      score = clampScoreRange(rng.normal(2.2, 0.48), 3.34);
+    } else if (kind === 'harsh') {
       score = clampScoreRange(rng.normal(4.6, 0.72), 7.8);
     } else {
       const isLoved = rng.next() >= 0.42;
@@ -287,17 +309,59 @@ const buildPresetRatings = (kind: 'harsh' | 'bimodal', seed: number): Restaurant
 };
 
 export const buildDatasetOptions = (users: UserRatings[]): DatasetOption[] => {
-  const totalCount = users.reduce((acc, u) => acc + u.ratings.length, 0);
+  let totalCount = 0;
+  let negativeCount = 0;
+  let neutralCount = 0;
+  let positiveCount = 0;
+  for (const u of users) {
+    totalCount += u.ratings.length;
+    for (const r of u.ratings) {
+      const tierId = getTierForScore(r.score).id;
+      if (tierId === 'dislike') negativeCount += 1;
+      else if (tierId === 'okay') neutralCount += 1;
+      else positiveCount += 1;
+    }
+  }
   const dinerOptions: DatasetOption[] = users.map((u, idx) => ({
     id: `diner:${idx}` as DatasetId,
-    label: `Diner #${idx + 1} · ${u.ratings.length} spots`,
-    shortLabel: `Diner #${idx + 1}`,
+    label: u.label
+      ? `Diner #${idx + 1} · ${u.label} · ${u.ratings.length} spots`
+      : `Diner #${idx + 1} · ${u.ratings.length} spots`,
+    shortLabel: u.label ? `Diner #${idx + 1} (${u.label})` : `Diner #${idx + 1}`,
     count: u.ratings.length,
     group: 'diners',
   }));
 
   return [
     ...dinerOptions,
+    {
+      id: 'preset:lover',
+      label: `Lover (Mostly 8–10) · ${PRESET_COUNT} spots`,
+      shortLabel: 'Lover',
+      count: PRESET_COUNT,
+      group: 'diners',
+    },
+    {
+      id: 'preset:hater',
+      label: `Hater (Mostly 1–3) · ${PRESET_COUNT} spots`,
+      shortLabel: 'Hater',
+      count: PRESET_COUNT,
+      group: 'diners',
+    },
+    {
+      id: 'preset:harsh',
+      label: `Tough Critic (Mostly 4–6) · ${PRESET_COUNT} spots`,
+      shortLabel: 'Tough Critic',
+      count: PRESET_COUNT,
+      group: 'diners',
+    },
+    {
+      id: 'preset:bimodal',
+      label: `Love-or-Skip Rater (Loves or Dislikes) · ${PRESET_COUNT} spots`,
+      shortLabel: 'Love-or-Skip',
+      count: PRESET_COUNT,
+      group: 'diners',
+    },
     {
       id: 'all',
       label: `All ${users.length} Diners · ${totalCount.toLocaleString()} spots`,
@@ -306,18 +370,25 @@ export const buildDatasetOptions = (users: UserRatings[]): DatasetOption[] => {
       group: 'aggregate',
     },
     {
-      id: 'preset:harsh',
-      label: `Tough Critic (Mostly 4–6) · ${PRESET_COUNT} spots`,
-      shortLabel: 'Tough Critic',
-      count: PRESET_COUNT,
-      group: 'presets',
+      id: 'all:negative',
+      label: `All Negative Diner Rankings (0.1–3.3) · ${negativeCount.toLocaleString()} spots`,
+      shortLabel: 'All Negative Rankings',
+      count: negativeCount,
+      group: 'aggregate',
     },
     {
-      id: 'preset:bimodal',
-      label: `Love-or-Skip Rater (Loves or Dislikes) · ${PRESET_COUNT} spots`,
-      shortLabel: 'Love-or-Skip',
-      count: PRESET_COUNT,
-      group: 'presets',
+      id: 'all:neutral',
+      label: `All Neutral Diner Rankings (3.4–6.6) · ${neutralCount.toLocaleString()} spots`,
+      shortLabel: 'All Neutral Rankings',
+      count: neutralCount,
+      group: 'aggregate',
+    },
+    {
+      id: 'all:positive',
+      label: `All Positive Diner Rankings (6.7–10.0) · ${positiveCount.toLocaleString()} spots`,
+      shortLabel: 'All Positive Rankings',
+      count: positiveCount,
+      group: 'aggregate',
     },
   ];
 };
@@ -341,10 +412,21 @@ export const getDatasetItems = (
   datasetId: DatasetId,
   seed: number,
 ): RestaurantScore[] => {
+  if (datasetId === 'preset:lover') return buildPresetRatings('lover', seed);
+  if (datasetId === 'preset:hater') return buildPresetRatings('hater', seed);
   if (datasetId === 'preset:harsh') return buildPresetRatings('harsh', seed);
   if (datasetId === 'preset:bimodal') return buildPresetRatings('bimodal', seed);
   if (datasetId === 'all') {
     return users.flatMap((u) => u.ratings.map((r) => ({ ...r, id: `${u.userId}-${r.id}` })));
+  }
+  if (datasetId === 'all:negative' || datasetId === 'all:neutral' || datasetId === 'all:positive') {
+    const targetTier: FoodTierId =
+      datasetId === 'all:negative' ? 'dislike' : datasetId === 'all:neutral' ? 'okay' : 'like';
+    return users.flatMap((u) =>
+      u.ratings
+        .filter((r) => getTierForScore(r.score).id === targetTier)
+        .map((r) => ({ ...r, id: `${u.userId}-${r.id}` })),
+    );
   }
   const idx = Number.parseInt(datasetId.slice('diner:'.length), 10);
   const safeIdx = Number.isFinite(idx) && idx >= 0 && idx < users.length ? idx : 0;

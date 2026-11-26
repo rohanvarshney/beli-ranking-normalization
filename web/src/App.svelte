@@ -25,7 +25,7 @@
   let datasetId = $state<DatasetId>(getDefaultDatasetId(generateMockUsers(1337)));
   let strategy = $state<Strategy>('quantile_map');
   let bucketCount = $state(4);
-  let speedMs = $state(2000);
+  let speedMs = $state(4000);
   let progress = $state(1);
   let playing = $state(false);
   let hoveredId = $state<string | null>(null);

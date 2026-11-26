@@ -106,7 +106,6 @@
 
   const dinerOptions = $derived(datasetOptions.filter((o) => o.group === 'diners'));
   const aggregateOptions = $derived(datasetOptions.filter((o) => o.group === 'aggregate'));
-  const presetOptions = $derived(datasetOptions.filter((o) => o.group === 'presets'));
 
   // Density curves & summaries computed across ALL N items
   const beforeCurve = $derived(computeDensityCurve(beforeScores, 90, 0.36));
@@ -262,18 +261,13 @@
           aria-label="Select diner or rating style preset"
           onchange={(e) => onDatasetChange((e.currentTarget as HTMLSelectElement).value as DatasetId)}
         >
-          <optgroup label="Sample Beli Diners">
+          <optgroup label="Sample Beli Diners & Rating Habits">
             {#each dinerOptions as opt (opt.id)}
               <option value={opt.id}>{opt.label}</option>
             {/each}
           </optgroup>
           <optgroup label="Everyone Combined">
             {#each aggregateOptions as opt (opt.id)}
-              <option value={opt.id}>{opt.label}</option>
-            {/each}
-          </optgroup>
-          <optgroup label="Rating Habits">
-            {#each presetOptions as opt (opt.id)}
               <option value={opt.id}>{opt.label}</option>
             {/each}
           </optgroup>
@@ -297,24 +291,24 @@
         <button
           type="button"
           class="speed-btn"
-          class:active={formatSpeedActive(3600)}
-          onclick={() => onSpeedChange(3600)}
+          class:active={formatSpeedActive(7200)}
+          onclick={() => onSpeedChange(7200)}
         >
           0.5×
         </button>
         <button
           type="button"
           class="speed-btn"
-          class:active={formatSpeedActive(2000)}
-          onclick={() => onSpeedChange(2000)}
+          class:active={formatSpeedActive(4000)}
+          onclick={() => onSpeedChange(4000)}
         >
           1×
         </button>
         <button
           type="button"
           class="speed-btn"
-          class:active={formatSpeedActive(900)}
-          onclick={() => onSpeedChange(900)}
+          class:active={formatSpeedActive(1800)}
+          onclick={() => onSpeedChange(1800)}
         >
           2×
         </button>

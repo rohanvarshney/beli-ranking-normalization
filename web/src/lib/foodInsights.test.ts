@@ -74,24 +74,76 @@ describe('foodInsights', () => {
     ]);
   });
 
-  it('generates deterministic presets strictly within (1.0, 10.0]', () => {
+  it('generates deterministic presets and distinctly profiled sample diners within (1.0, 10.0]', () => {
     const users = generateMockUsers(1337);
     const options = buildDatasetOptions(users);
-    expect(options.length).toBe(13);
-    expect(getDefaultDatasetId(users)).toBe('diner:6');
+    expect(options.length).toBe(18);
+    expect(getDefaultDatasetId(users)).toMatch(/^diner:\d+$/);
 
+    // Aggregate group includes All Diners + Negative / Neutral / Positive tier partitions
+    const aggregateOptions = options.filter((o) => o.group === 'aggregate');
+    expect(aggregateOptions.map((o) => o.id)).toEqual([
+      'all',
+      'all:negative',
+      'all:neutral',
+      'all:positive',
+    ]);
+    const allItems = getDatasetItems(users, 'all', 1337);
+    const negItems = getDatasetItems(users, 'all:negative', 1337);
+    const neuItems = getDatasetItems(users, 'all:neutral', 1337);
+    const posItems = getDatasetItems(users, 'all:positive', 1337);
+    expect(negItems.length).toBeGreaterThan(0);
+    expect(neuItems.length).toBeGreaterThan(0);
+    expect(posItems.length).toBeGreaterThan(0);
+    expect(negItems.length + neuItems.length + posItems.length).toBe(allItems.length);
+    expect(negItems.every((x) => getTierForScore(x.score).id === 'dislike')).toBe(true);
+    expect(neuItems.every((x) => getTierForScore(x.score).id === 'okay')).toBe(true);
+    expect(posItems.every((x) => getTierForScore(x.score).id === 'like')).toBe(true);
+
+    // Every sample diner & rating habit has a distinct descriptive label and score distribution
+    const dinerLabels = options.filter((o) => o.group === 'diners').map((o) => o.label);
+    expect(new Set(dinerLabels).size).toBe(14);
+    expect(dinerLabels[0]).toContain('Tight 8.0–8.6 Pack');
+    expect(dinerLabels[9]).toContain('Tough Skeptic');
+    expect(dinerLabels[10]).toContain('Lover');
+    expect(dinerLabels[11]).toContain('Hater');
+
+    const tightSummary = computeDistributionSummary(users[0].ratings.map((r) => r.score));
+    const generousSummary = computeDistributionSummary(users[1].ratings.map((r) => r.score));
+    const balancedSummary = computeDistributionSummary(users[5].ratings.map((r) => r.score));
+    const skepticSummary = computeDistributionSummary(users[9].ratings.map((r) => r.score));
+
+    expect(tightSummary.iqr).toBeLessThan(0.6);
+    expect(generousSummary.median).toBeGreaterThan(8.2);
+    expect(balancedSummary.iqr).toBeGreaterThan(2.0);
+    expect(skepticSummary.median).toBeLessThan(4.8);
+
+    // Diner #8 snaps to 0.5 increments so it produces many exact ties
+    const tieHeavyScores = users[7].ratings.map((r) => r.score);
+    expect(new Set(tieHeavyScores).size).toBeLessThan(tieHeavyScores.length / 2);
+
+    const loverA = getDatasetItems(users, 'preset:lover', 1337);
+    const loverB = getDatasetItems(users, 'preset:lover', 1337);
+    const hater = getDatasetItems(users, 'preset:hater', 1337);
     const harshA = getDatasetItems(users, 'preset:harsh', 1337);
     const harshB = getDatasetItems(users, 'preset:harsh', 1337);
     const bimodal = getDatasetItems(users, 'preset:bimodal', 1337);
 
+    expect(loverA).toEqual(loverB);
     expect(harshA).toEqual(harshB);
+    expect(loverA).toHaveLength(65);
+    expect(hater).toHaveLength(65);
     expect(harshA).toHaveLength(65);
     expect(bimodal).toHaveLength(65);
 
-    for (const item of [...harshA, ...bimodal]) {
+    for (const item of [...loverA, ...hater, ...harshA, ...bimodal]) {
       expect(item.score).toBeGreaterThan(1.0);
       expect(item.score).toBeLessThanOrEqual(10.0);
     }
+    expect(Math.min(...loverA.map((x) => x.score))).toBeGreaterThanOrEqual(7.2);
+    expect(loverA.every((x) => getTierForScore(x.score).id === 'like')).toBe(true);
+    expect(Math.max(...hater.map((x) => x.score))).toBeLessThanOrEqual(3.34);
+    expect(hater.every((x) => getTierForScore(x.score).id === 'dislike')).toBe(true);
     expect(Math.max(...harshA.map((x) => x.score))).toBeLessThanOrEqual(7.8);
   });
 

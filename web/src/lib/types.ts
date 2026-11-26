@@ -10,5 +10,7 @@ export type RestaurantScore = {
 
 export type UserRatings = {
   userId: string;
+  label?: string;
+  description?: string;
   ratings: RestaurantScore[];
 };
