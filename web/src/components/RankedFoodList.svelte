@@ -137,7 +137,7 @@
 <section class="list-card card" aria-label="Ranked food list">
   <div class="list-header">
     <div>
-      <h2>Sample "Been" List — Same Order, Clearer Scores</h2>
+      <h2>Sample "Been" List: Same Order, Clearer Scores</h2>
       <p class="subtitle">
         Every spot keeps its exact rank from #1 down to #{ranked.length.toLocaleString()}.
       </p>

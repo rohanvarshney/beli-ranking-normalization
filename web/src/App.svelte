@@ -193,7 +193,7 @@
       <h2 class="section-title">Stretch the scores, never the ranks</h2>
       <p class="section-lead">
         Keep Beli's head-to-head ranking UX 100% unchanged. Add a lightweight calibration step that
-        spreads a user's scores across the full 1–10 scale—and pick the curve style that best fits
+        spreads a user's scores across the full 1–10 scale, and pick the curve style that best fits
         Beli's product voice.
       </p>
     </div>

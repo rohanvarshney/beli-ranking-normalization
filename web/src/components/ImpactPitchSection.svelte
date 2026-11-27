@@ -8,8 +8,8 @@
     <span class="section-eyebrow">04 · Product Impact</span>
     <h2 class="section-title">Four wins across the Beli app</h2>
     <p class="section-lead">
-      Calibrating scores behind the scenes makes every existing Beli surface—personal lists,
-      friend feeds, and personalized recommendations—sharper without changing how diners log a meal.
+      Calibrating scores behind the scenes makes every existing Beli surface (personal lists,
+      friend feeds, and personalized recommendations) sharper without changing how diners log a meal.
     </p>
   </div>
 
@@ -61,9 +61,9 @@
 
   <div class="readiness-grid">
     <div class="ready-card card">
-      <div class="ready-title">Sub-millisecond speed</div>
+      <div class="ready-title">Runs in milliseconds</div>
       <p>
-        <code>O(n log n)</code> runtime and <code>O(n)</code> memory—calibrates a 500-spot list
+        <code>O(n log n)</code> runtime and <code>O(n)</code> memory, calibrating a 500-spot list
         instantaneously on the fly.
       </p>
     </div>

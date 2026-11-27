@@ -23,7 +23,7 @@
     <a
       class="brand-home-link"
       href="https://rohanvarshney.github.io"
-      title="Rohan Varshney — Personal Website"
+      title="Rohan Varshney's Personal Website"
       aria-label="Back to rohanvarshney.github.io"
     >
       <img src={signatureImg} alt="Rohan Varshney" class="brand-signature" />

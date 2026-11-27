@@ -3,9 +3,10 @@
     <span class="section-eyebrow">Product Proposal for Beli</span>
     <h1>Make Every Point on Beli Mean Something Again</h1>
     <p class="hero-lead">
-      Beli replaced anonymous 5-star reviews with head-to-head rankings on your
-      <strong>Been</strong> list. As lists grow, scores crowd into 7.5–9.0—automatic score
-      calibration unlocks the full 1–10 scale without changing a single rank.
+      Beli replaced the industry's anonymous 5-star reviews with head-to-head rankings on your
+      <strong>Been</strong> list. But as lists grow, most diners rate restaurants around the same
+      score, causing score overcrowding that blurs standouts and average spots together. Automatic
+      score calibration unlocks the full 1–10 scale without changing a single rank.
     </p>
 
     <div class="hero-actions">
@@ -32,7 +33,7 @@
     <div class="pillar-card">
       <div class="pillar-title">Zero Manual Re-Ranking</div>
       <p class="pillar-copy">
-        Runs automatically in under a millisecond—zero UX friction for diners.
+        Runs automatically in milliseconds, with zero UX friction for diners.
       </p>
     </div>
   </div>

@@ -90,7 +90,7 @@
     <h2 class="section-title">The 8.2 Traffic Jam</h2>
     <p class="section-lead">
       Diners naturally visit restaurants they expect to enjoy. Once a <strong>Been</strong> list
-      reaches 50–500+ spots, almost everything piles into <em>I liked it!</em>—squeezing
+      reaches 50–500+ spots, almost everything piles into <em>I liked it!</em> That squeezes
       all-time favorites and average weeknight spots into the same tiny band.
     </p>
   </div>
@@ -207,7 +207,7 @@
 
       <p class="punchline">
         The picky friend's <strong>#1 spot of the year</strong> ({scaleComparison.harsh.best.toFixed(1)})
-        looks worse on paper than the generous friend's average Tuesday takeout ({scaleComparison.lover.median.toFixed(1)})—blurring
+        looks worse on paper than the generous friend's average Tuesday takeout ({scaleComparison.lover.median.toFixed(1)}), blurring
         <strong>Friend Scores</strong> and <strong>Rec Scores</strong>.
       </p>
 
